@@ -1,5 +1,3 @@
-const { sql } = require('@vercel/postgres');
-
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,34 +11,45 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Test basic database connection
-    const result = await sql`SELECT NOW() as current_time, version() as postgres_version`;
-    
-    // Get environment info
+    // Get environment info first (without database connection)
     const envInfo = {
       hasPostgresUrl: !!process.env.POSTGRES_URL,
       hasPrismaUrl: !!process.env.PRISMA_DATABASE_URL,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
       postgresHost: process.env.POSTGRES_HOST || 'Not set',
       postgresDatabase: process.env.POSTGRES_DATABASE || 'Not set',
       nodeVersion: process.version,
       vercelEnv: process.env.VERCEL_ENV || 'local'
     };
 
-    res.status(200).json({
-      success: true,
-      message: 'Database connection successful!',
-      timestamp: new Date().toISOString(),
-      databaseInfo: result.rows[0],
-      environment: envInfo
-    });
+    // Only try database connection if we have the URL
+    if (process.env.POSTGRES_URL) {
+      const { sql } = require('@vercel/postgres');
+      const result = await sql`SELECT NOW() as current_time`;
+      
+      res.status(200).json({
+        success: true,
+        message: 'Database connection successful!',
+        timestamp: new Date().toISOString(),
+        databaseInfo: result.rows[0],
+        environment: envInfo
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        message: 'No database URL found - database not configured',
+        environment: envInfo,
+        timestamp: new Date().toISOString()
+      });
+    }
 
   } catch (error) {
     console.error('Database connection error:', error);
     
-    // Get environment info even on error
     const envInfo = {
       hasPostgresUrl: !!process.env.POSTGRES_URL,
       hasPrismaUrl: !!process.env.PRISMA_DATABASE_URL,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
       postgresHost: process.env.POSTGRES_HOST || 'Not set',
       postgresDatabase: process.env.POSTGRES_DATABASE || 'Not set',
       nodeVersion: process.version,
