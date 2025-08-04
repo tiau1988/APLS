@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Asia Pacific Lions Leaders Summit 2026 - Official Event Registration Website",
   "engines": {
-    "node": "18.x"
+    "node": "18.x",
+    "npm": ">=8.0.0"
   },
   "dependencies": {
     "@vercel/postgres": "^0.5.0"
