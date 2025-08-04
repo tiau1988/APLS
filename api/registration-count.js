@@ -1,7 +1,7 @@
 // API endpoint for getting registration counts
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -22,25 +22,33 @@ export default async function handler(req, res) {
       SELECT COUNT(*) as total FROM registrations;
     `;
 
-    // Get early bird registrations (assuming early bird ends on a specific date)
-    const earlyBirdResult = await sql`
-      SELECT COUNT(*) as early_bird 
+    // Get confirmed registrations
+    const confirmedResult = await sql`
+      SELECT COUNT(*) as confirmed 
       FROM registrations 
-      WHERE registration_type = 'early-bird';
+      WHERE status = 'confirmed';
+    `;
+
+    // Get pending registrations
+    const pendingResult = await sql`
+      SELECT COUNT(*) as pending 
+      FROM registrations 
+      WHERE status = 'pending';
     `;
 
     // Get recent registrations (last 24 hours)
     const recentResult = await sql`
       SELECT COUNT(*) as recent 
       FROM registrations 
-      WHERE created_at >= NOW() - INTERVAL '24 hours';
+      WHERE registration_date >= NOW() - INTERVAL '24 hours';
     `;
 
     const counts = {
       total: parseInt(totalResult.rows[0].total),
-      earlyBird: parseInt(earlyBirdResult.rows[0].early_bird),
+      confirmed: parseInt(confirmedResult.rows[0].confirmed),
+      pending: parseInt(pendingResult.rows[0].pending),
       recent: parseInt(recentResult.rows[0].recent),
-      earlyBirdAvailable: Math.max(0, 100 - parseInt(earlyBirdResult.rows[0].early_bird)) // Assuming 100 early bird slots
+      available: Math.max(0, 500 - parseInt(totalResult.rows[0].total)) // Assuming 500 total slots
     };
 
     res.status(200).json({
@@ -56,4 +64,4 @@ export default async function handler(req, res) {
       details: error.message
     });
   }
-}
+};

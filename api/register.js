@@ -1,9 +1,9 @@
 // API endpoint for handling registration submissions
 // This will work with Vercel's serverless functions
 
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -20,49 +20,55 @@ export default async function handler(req, res) {
 
   try {
     const {
-      fullName,
+      firstName,
+      lastName,
       email,
       phone,
-      clubName,
-      district,
+      organization,
       position,
-      registrationType,
-      totalAmount,
-      optionalPrograms,
-      paymentSlip
+      country,
+      dietaryRestrictions,
+      accessibilityNeeds,
+      emergencyContactName,
+      emergencyContactPhone
     } = req.body;
 
-    // Generate unique registration ID
-    const registrationId = 'APLLS2026-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    // Basic validation
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'First name, last name, and email are required'
+      });
+    }
 
     // Insert registration into database
     const result = await sql`
       INSERT INTO registrations (
-        registration_id,
-        full_name,
+        first_name,
+        last_name,
         email,
         phone,
-        club_name,
-        district,
+        organization,
         position,
-        registration_type,
-        total_amount,
-        optional_programs,
-        payment_slip,
-        created_at
+        country,
+        dietary_restrictions,
+        accessibility_needs,
+        emergency_contact_name,
+        emergency_contact_phone,
+        status
       ) VALUES (
-        ${registrationId},
-        ${fullName},
+        ${firstName},
+        ${lastName},
         ${email},
-        ${phone},
-        ${clubName},
-        ${district},
-        ${position},
-        ${registrationType},
-        ${totalAmount},
-        ${JSON.stringify(optionalPrograms)},
-        ${paymentSlip || null},
-        NOW()
+        ${phone || null},
+        ${organization || null},
+        ${position || null},
+        ${country || null},
+        ${dietaryRestrictions || null},
+        ${accessibilityNeeds || null},
+        ${emergencyContactName || null},
+        ${emergencyContactPhone || null},
+        'pending'
       )
       RETURNING *;
     `;
@@ -70,7 +76,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       success: true,
       message: 'Registration successful!',
-      registrationId: registrationId,
+      registrationId: result.rows[0].id,
       data: result.rows[0]
     });
 
@@ -82,4 +88,4 @@ export default async function handler(req, res) {
       details: error.message
     });
   }
-}
+};

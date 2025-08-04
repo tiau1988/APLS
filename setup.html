@@ -94,6 +94,8 @@
 
         <button onclick="testAPI()" id="testBtn">🔍 Test API Connection</button>
         <button onclick="initDatabase()" id="initBtn">🚀 Initialize Database</button>
+        <button onclick="testRegistration()" id="testRegBtn">📝 Test Registration</button>
+        <button onclick="getRegistrationCount()" id="countBtn">📊 Get Registration Count</button>
 
         <div id="results" class="test-results" style="display: none;"></div>
 
@@ -142,10 +144,14 @@
         }
 
         async function initDatabase() {
-            const initBtn = document.getElementById('initBtn');
-            initBtn.disabled = true;
-            showStatus('Initializing database...', 'loading');
-
+            const btn = document.getElementById('initBtn');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Initializing...';
+            results.style.display = 'block';
+            results.innerHTML = '<div class="loading">Initializing database...</div>';
+            
             try {
                 const response = await fetch('/api/init-db', {
                     method: 'POST',
@@ -156,19 +162,145 @@
                 
                 const data = await response.json();
                 
-                if (data.success) {
-                    showStatus('✅ Database initialized successfully!', 'success');
-                    showResults(data);
+                if (response.ok) {
+                    results.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Database Initialized Successfully!</h3>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Timestamp:</strong> ${data.timestamp}</p>
+                            <p><strong>Registration Count:</strong> ${data.registrationCount || 0}</p>
+                        </div>
+                    `;
                 } else {
-                    showStatus('❌ Database initialization failed: ' + data.error, 'error');
-                    showResults(data);
+                    results.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Database Initialization Failed</h3>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <p><strong>Details:</strong> ${data.details}</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
-                showStatus('❌ Failed to initialize database: ' + error.message, 'error');
-                showResults({ error: error.message });
-            } finally {
-                initBtn.disabled = false;
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Connection Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure your site is deployed and the API endpoints are working.</p>
+                    </div>
+                `;
             }
+            
+            btn.disabled = false;
+            btn.textContent = '🚀 Initialize Database';
+        }
+
+        async function testRegistration() {
+            const btn = document.getElementById('testRegBtn');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Testing...';
+            results.style.display = 'block';
+            results.innerHTML = '<div class="loading">Testing registration...</div>';
+            
+            const testData = {
+                firstName: 'Test',
+                lastName: 'User',
+                email: `test${Date.now()}@example.com`,
+                phone: '+1234567890',
+                organization: 'Test Organization',
+                position: 'Test Position',
+                country: 'Test Country',
+                dietaryRestrictions: 'None',
+                accessibilityNeeds: 'None',
+                emergencyContactName: 'Emergency Contact',
+                emergencyContactPhone: '+0987654321'
+            };
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    results.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Registration Test Successful!</h3>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Registration ID:</strong> ${data.registrationId}</p>
+                            <p><strong>Email:</strong> ${data.data.email}</p>
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Registration Test Failed</h3>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Registration Test Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '📝 Test Registration';
+        }
+
+        async function getRegistrationCount() {
+            const btn = document.getElementById('countBtn');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Loading...';
+            results.style.display = 'block';
+            results.innerHTML = '<div class="loading">Getting registration count...</div>';
+            
+            try {
+                const response = await fetch('/api/registration-count');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    results.innerHTML = `
+                        <div class="success">
+                            <h3>📊 Registration Statistics</h3>
+                            <p><strong>Total Registrations:</strong> ${data.counts.total}</p>
+                            <p><strong>Confirmed:</strong> ${data.counts.confirmed}</p>
+                            <p><strong>Pending:</strong> ${data.counts.pending}</p>
+                            <p><strong>Recent (24h):</strong> ${data.counts.recent}</p>
+                            <p><strong>Available Slots:</strong> ${data.counts.available}</p>
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Count Fetch Failed</h3>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Count Fetch Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '📊 Get Registration Count';
         }
 
         // Auto-test API on page load

@@ -1,7 +1,7 @@
 // Admin API endpoint for viewing all registrations
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -20,29 +20,31 @@ export default async function handler(req, res) {
     // Get all registrations with details
     const result = await sql`
       SELECT 
-        registration_id,
-        full_name,
+        id,
+        first_name,
+        last_name,
         email,
         phone,
-        club_name,
-        district,
+        organization,
         position,
-        registration_type,
-        total_amount,
-        optional_programs,
-        created_at
+        country,
+        dietary_restrictions,
+        accessibility_needs,
+        emergency_contact_name,
+        emergency_contact_phone,
+        registration_date,
+        status
       FROM registrations 
-      ORDER BY created_at DESC;
+      ORDER BY registration_date DESC;
     `;
 
     // Get summary statistics
     const statsResult = await sql`
       SELECT 
         COUNT(*) as total_registrations,
-        SUM(total_amount) as total_revenue,
-        COUNT(CASE WHEN registration_type = 'early-bird' THEN 1 END) as early_bird_count,
-        COUNT(CASE WHEN registration_type = 'standard' THEN 1 END) as standard_count,
-        COUNT(CASE WHEN registration_type = 'late' THEN 1 END) as late_count
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+        COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
+        COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_count
       FROM registrations;
     `;
 
@@ -61,4 +63,4 @@ export default async function handler(req, res) {
       details: error.message
     });
   }
-}
+};
