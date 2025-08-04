@@ -1,0 +1,128 @@
+<svg width="996" height="615" viewBox="0 0 996 615" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="996" height="615" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="498" y="40" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold" letter-spacing="3px">
+    ASIA PACIFIC LIONS LEADERS SUMMIT 2026
+  </text>
+  
+  <!-- Speaker Photos Placeholders (7 speakers) -->
+  <g id="speakers">
+    <!-- Speaker 1 -->
+    <circle cx="120" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="120" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="120" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">Chiu YuLing</text>
+    <text x="120" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">Senior Regional Development Specialist</text>
+    
+    <!-- Speaker 2 -->
+    <circle cx="240" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="240" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="240" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">Datin Ellis Suriyati</text>
+    <text x="240" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">Past International Director</text>
+    
+    <!-- Speaker 3 -->
+    <circle cx="360" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="360" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="360" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">Potter Ka</text>
+    <text x="360" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">LCI Board Appointee</text>
+    
+    <!-- Speaker 4 (Center - Main) -->
+    <circle cx="498" cy="150" r="50" fill="#ffffff" stroke="#ffd700" stroke-width="4"/>
+    <text x="498" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="14" font-weight="bold">Speaker</text>
+    <text x="498" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">Dato' Yeow Wah chin</text>
+    <text x="498" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="10">International Director</text>
+    
+    <!-- Speaker 5 -->
+    <circle cx="636" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="636" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="636" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">PDG Eve Wong</text>
+    <text x="636" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">GAT Area Leader</text>
+    
+    <!-- Speaker 6 -->
+    <circle cx="756" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="756" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="756" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">Boston Ho</text>
+    <text x="756" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">Lawyer</text>
+    
+    <!-- Speaker 7 -->
+    <circle cx="876" cy="150" r="45" fill="#ffffff" stroke="#ffd700" stroke-width="3"/>
+    <text x="876" y="155" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="12" font-weight="bold">Speaker</text>
+    <text x="876" y="220" text-anchor="middle" fill="white" font-family="Arial" font-size="10">Ellen Lu</text>
+    <text x="876" y="235" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="8">2022 LCI Malaysia</text>
+  </g>
+  
+  <!-- Lions Logo Star -->
+  <g id="lions-star" transform="translate(150, 350)">
+    <polygon points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35" fill="#ffd700" stroke="#ff6b35" stroke-width="2"/>
+    <circle cx="50" cy="50" r="25" fill="#1e3a8a"/>
+    <text x="50" y="55" text-anchor="middle" fill="white" font-family="Arial" font-size="16" font-weight="bold">L</text>
+  </g>
+  
+  <!-- Event Title -->
+  <text x="400" y="380" fill="#ff6b35" font-family="Arial" font-size="24" font-weight="bold">Asia Pacific</text>
+  <text x="400" y="410" fill="#ffd700" font-family="Arial" font-size="32" font-weight="bold">Lions Leadership Summit</text>
+  <text x="400" y="440" fill="#ff6b35" font-family="Arial" font-size="28" font-weight="bold">2026</text>
+  
+  <!-- Date and Location -->
+  <g id="event-details">
+    <rect x="400" y="460" width="80" height="40" rx="5" fill="#1e3a8a"/>
+    <text x="440" y="475" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">📅 17th</text>
+    <text x="440" y="490" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">➡️ 19th</text>
+    
+    <text x="500" y="475" fill="white" font-family="Arial" font-size="16" font-weight="bold">JULY,</text>
+    <text x="500" y="495" fill="white" font-family="Arial" font-size="16" font-weight="bold">2026</text>
+    
+    <text x="400" y="520" fill="white" font-family="Arial" font-size="14">📍 Kingwood Hotel Sibu Sarawak, Malaysia</text>
+  </g>
+  
+  <!-- Pricing -->
+  <g id="pricing">
+    <!-- Early Bird -->
+    <rect x="400" y="540" width="140" height="50" rx="5" fill="#ff6b35"/>
+    <text x="420" y="555" fill="white" font-family="Arial" font-size="10" font-weight="bold">Early Bird Limited</text>
+    <text x="420" y="568" fill="white" font-family="Arial" font-size="8">150pax only</text>
+    <text x="420" y="580" fill="white" font-family="Arial" font-size="8">before 30 Sep 2025</text>
+    <text x="470" y="575" fill="white" font-family="Arial" font-size="20" font-weight="bold">RM260</text>
+    
+    <!-- Normal Price -->
+    <rect x="550" y="540" width="140" height="50" rx="5" fill="#1e3a8a"/>
+    <text x="570" y="555" fill="white" font-family="Arial" font-size="10" font-weight="bold">Normal Price</text>
+    <text x="570" y="568" fill="white" font-family="Arial" font-size="8">before 31 May 2026</text>
+    <text x="620" y="575" fill="white" font-family="Arial" font-size="20" font-weight="bold">RM390</text>
+  </g>
+  
+  <!-- Bottom Sponsors -->
+  <g id="sponsors" transform="translate(50, 580)">
+    <circle cx="50" cy="15" r="15" fill="#ffd700"/>
+    <text x="50" y="20" text-anchor="middle" fill="#1e3a8a" font-family="Arial" font-size="8" font-weight="bold">L</text>
+    
+    <text x="80" y="20" fill="white" font-family="Arial" font-size="12" font-weight="bold">LIONS INTERNATIONAL DISTRICT 308-A2</text>
+    
+    <!-- Additional sponsor logos placeholders -->
+    <circle cx="400" cy="15" r="15" fill="#10b981"/>
+    <circle cx="450" cy="15" r="15" fill="#0891b2"/>
+    <circle cx="500" cy="15" r="15" fill="#1e3a8a"/>
+    
+    <text x="600" y="15" fill="white" font-family="Arial" font-size="10">TRIBE</text>
+    <text x="600" y="25" fill="white" font-family="Arial" font-size="8">SARAWAK</text>
+    
+    <text x="700" y="20" fill="#ffd700" font-family="Arial" font-size="12" font-weight="bold">Sarawak</text>
+  </g>
+</svg>

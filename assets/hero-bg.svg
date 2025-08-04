@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4682B4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sky background -->
+  <rect width="1200" height="800" fill="url(#skyGradient)"/>
+  
+  <!-- Mountains -->
+  <polygon points="0,600 200,400 400,500 600,350 800,450 1000,300 1200,400 1200,800 0,800" fill="#2F4F4F" opacity="0.8"/>
+  
+  <!-- Buildings silhouette -->
+  <rect x="100" y="500" width="80" height="300" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="200" y="450" width="60" height="350" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="280" y="480" width="90" height="320" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="400" y="420" width="70" height="380" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="500" y="460" width="85" height="340" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="700" y="400" width="75" height="400" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="800" y="440" width="95" height="360" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="920" y="380" width="80" height="420" fill="#1a1a1a" opacity="0.6"/>
+  <rect x="1020" y="420" width="70" height="380" fill="#1a1a1a" opacity="0.6"/>
+  
+  <!-- Convention center building -->
+  <rect x="450" y="350" width="300" height="200" fill="#0056b3" opacity="0.7"/>
+  <rect x="480" y="320" width="240" height="30" fill="#00a0e9" opacity="0.8"/>
+  <text x="600" y="340" text-anchor="middle" fill="white" font-family="Arial" font-size="16" font-weight="bold">CONVENTION CENTER</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="150" r="30" fill="#FFD700" opacity="0.8"/>
+  <circle cx="1050" cy="200" r="25" fill="#FFD700" opacity="0.6"/>
+  
+  <!-- Abstract geometric shapes -->
+  <polygon points="50,200 100,150 150,200 100,250" fill="#ff6b6b" opacity="0.3"/>
+  <polygon points="1000,100 1050,50 1100,100 1050,150" fill="#ff6b6b" opacity="0.3"/>
+</svg>
