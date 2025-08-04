@@ -93,6 +93,7 @@
         <div id="status" class="status" style="display: none;"></div>
 
         <button onclick="testAPI()" id="testBtn">🔍 Test API Connection</button>
+        <button onclick="testDatabaseConnection()" id="testDbBtn">🗄️ Test Database Connection</button>
         <button onclick="initDatabase()" id="initBtn">🚀 Initialize Database</button>
         <button onclick="testRegistration()" id="testRegBtn">📝 Test Registration</button>
         <button onclick="getRegistrationCount()" id="countBtn">📊 Get Registration Count</button>
@@ -117,6 +118,58 @@
             const results = document.getElementById('results');
             results.textContent = JSON.stringify(data, null, 2);
             results.style.display = 'block';
+        }
+
+        async function testDatabaseConnection() {
+            const btn = document.getElementById('testDbBtn');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Testing...';
+            results.style.display = 'block';
+            results.innerHTML = '<div class="loading">Testing database connection...</div>';
+            
+            try {
+                const response = await fetch('/api/db-test');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    results.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Database Connection Successful!</h3>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Database:</strong> ${data.environment.postgresDatabase}</p>
+                            <p><strong>Host:</strong> ${data.environment.postgresHost}</p>
+                            <p><strong>Has POSTGRES_URL:</strong> ${data.environment.hasPostgresUrl ? 'Yes' : 'No'}</p>
+                            <p><strong>Has PRISMA_URL:</strong> ${data.environment.hasPrismaUrl ? 'Yes' : 'No'}</p>
+                            <p><strong>Current Time:</strong> ${data.databaseInfo.current_time}</p>
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Database Connection Failed</h3>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <p><strong>Details:</strong> ${data.details}</p>
+                            <p><strong>Database:</strong> ${data.environment.postgresDatabase}</p>
+                            <p><strong>Host:</strong> ${data.environment.postgresHost}</p>
+                            <p><strong>Has POSTGRES_URL:</strong> ${data.environment.hasPostgresUrl ? 'Yes' : 'No'}</p>
+                            <p><strong>Has PRISMA_URL:</strong> ${data.environment.hasPrismaUrl ? 'Yes' : 'No'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Connection Test Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>This might indicate the API endpoint is not working or returning HTML instead of JSON.</p>
+                    </div>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🗄️ Test Database Connection';
         }
 
         async function testAPI() {
