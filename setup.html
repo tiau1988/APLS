@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APLLS 2026 - Database Setup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .setup-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2a5298;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .test-results {
+            text-align: left;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <h1>🗄️ Database Setup</h1>
+        <p>Initialize your APLLS 2026 registration database</p>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <button onclick="testAPI()" id="testBtn">🔍 Test API Connection</button>
+        <button onclick="initDatabase()" id="initBtn">🚀 Initialize Database</button>
+
+        <div id="results" class="test-results" style="display: none;"></div>
+
+        <div style="margin-top: 30px;">
+            <a href="/" style="color: #1e3c72; text-decoration: none;">← Back to Website</a> |
+            <a href="/admin.html" style="color: #1e3c72; text-decoration: none;">Admin Dashboard →</a>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function showResults(data) {
+            const results = document.getElementById('results');
+            results.textContent = JSON.stringify(data, null, 2);
+            results.style.display = 'block';
+        }
+
+        async function testAPI() {
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            showStatus('Testing API connection...', 'loading');
+
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('✅ API is working correctly!', 'success');
+                    showResults(data);
+                } else {
+                    showStatus('❌ API test failed', 'error');
+                    showResults(data);
+                }
+            } catch (error) {
+                showStatus('❌ Failed to connect to API: ' + error.message, 'error');
+                showResults({ error: error.message });
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        async function initDatabase() {
+            const initBtn = document.getElementById('initBtn');
+            initBtn.disabled = true;
+            showStatus('Initializing database...', 'loading');
+
+            try {
+                const response = await fetch('/api/init-db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('✅ Database initialized successfully!', 'success');
+                    showResults(data);
+                } else {
+                    showStatus('❌ Database initialization failed: ' + data.error, 'error');
+                    showResults(data);
+                }
+            } catch (error) {
+                showStatus('❌ Failed to initialize database: ' + error.message, 'error');
+                showResults({ error: error.message });
+            } finally {
+                initBtn.disabled = false;
+            }
+        }
+
+        // Auto-test API on page load
+        window.onload = function() {
+            testAPI();
+        };
+    </script>
+</body>
+</html>
