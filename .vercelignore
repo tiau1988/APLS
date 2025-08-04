@@ -1,0 +1,16 @@
+# Development files
+node_modules/
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+DEPLOYMENT.md
+
+# Package files (not needed for static deployment)
+package.json
+package-lock.json
+
+# Vercel files
+.vercel/
