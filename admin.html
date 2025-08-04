@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APLLS 2026 - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .registrations {
+            padding: 30px;
+        }
+
+        .registrations h2 {
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px;
+        }
+
+        .refresh-btn {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #2a5298;
+        }
+
+        .export-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦁 APLLS 2026 Admin Dashboard</h1>
+            <p>Registration Management System</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRegistrations">-</div>
+                <div class="stat-label">Total Registrations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRevenue">-</div>
+                <div class="stat-label">Total Revenue (RM)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="earlyBirdCount">-</div>
+                <div class="stat-label">Early Bird</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="standardCount">-</div>
+                <div class="stat-label">Standard</div>
+            </div>
+        </div>
+
+        <div class="registrations">
+            <h2>📋 Registration Details</h2>
+            <button class="refresh-btn" onclick="loadRegistrations()">🔄 Refresh</button>
+            <button class="export-btn" onclick="exportToCSV()">📊 Export CSV</button>
+            
+            <div class="table-container">
+                <table id="registrationsTable">
+                    <thead>
+                        <tr>
+                            <th>Registration ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Club</th>
+                            <th>District</th>
+                            <th>Position</th>
+                            <th>Type</th>
+                            <th>Amount (RM)</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationsBody">
+                        <tr>
+                            <td colspan="10" class="loading">Loading registrations...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let registrationsData = [];
+
+        async function loadRegistrations() {
+            try {
+                const response = await fetch('/api/admin/registrations');
+                const data = await response.json();
+
+                if (data.success) {
+                    registrationsData = data.registrations;
+                    updateStats(data.statistics);
+                    updateTable(data.registrations);
+                } else {
+                    showError('Failed to load registrations: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading registrations:', error);
+                showError('Error connecting to database. Please check your connection.');
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalRegistrations').textContent = stats.total_registrations || 0;
+            document.getElementById('totalRevenue').textContent = (stats.total_revenue || 0).toLocaleString();
+            document.getElementById('earlyBirdCount').textContent = stats.early_bird_count || 0;
+            document.getElementById('standardCount').textContent = stats.standard_count || 0;
+        }
+
+        function updateTable(registrations) {
+            const tbody = document.getElementById('registrationsBody');
+            
+            if (registrations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="loading">No registrations found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = registrations.map(reg => `
+                <tr>
+                    <td>${reg.registration_id}</td>
+                    <td>${reg.full_name}</td>
+                    <td>${reg.email}</td>
+                    <td>${reg.phone || '-'}</td>
+                    <td>${reg.club_name || '-'}</td>
+                    <td>${reg.district || '-'}</td>
+                    <td>${reg.position || '-'}</td>
+                    <td>${reg.registration_type}</td>
+                    <td>RM ${reg.total_amount}</td>
+                    <td>${new Date(reg.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showError(message) {
+            const tbody = document.getElementById('registrationsBody');
+            tbody.innerHTML = `<tr><td colspan="10" class="error">${message}</td></tr>`;
+        }
+
+        function exportToCSV() {
+            if (registrationsData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date'];
+            const csvContent = [
+                headers.join(','),
+                ...registrationsData.map(reg => [
+                    reg.registration_id,
+                    `"${reg.full_name}"`,
+                    reg.email,
+                    reg.phone || '',
+                    `"${reg.club_name || ''}"`,
+                    `"${reg.district || ''}"`,
+                    `"${reg.position || ''}"`,
+                    reg.registration_type,
+                    reg.total_amount,
+                    new Date(reg.created_at).toLocaleDateString()
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aplls-2026-registrations-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Load data on page load
+        loadRegistrations();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadRegistrations, 30000);
+    </script>
+</body>
+</html>
