@@ -82,7 +82,7 @@ export default function handler(req, res) {
     success: true,
     message: "Simple test endpoint with database connectivity test",
     timestamp: new Date().toISOString(),
-    deployment_trigger: "Native database connectivity test",
+    deployment_trigger: "Native database connectivity test - Force Deploy",
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       VERCEL: process.env.VERCEL,
