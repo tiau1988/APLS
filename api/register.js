@@ -68,15 +68,11 @@ module.exports = async (req, res) => {
     registrationFee = registrationPrices[registrationType] || 0;
 
     let optionalFee = 0;
-    const optionalPrices = {
-      'poolside-party': 50,
-      'community-service': 30,
-      'installation-banquet': 120
-    };
-
-    if (poolsideParty && poolsideParty !== '') optionalFee += optionalPrices['poolside-party'] || 0;
-    if (communityService && communityService !== '') optionalFee += optionalPrices['community-service'] || 0;
-    if (installationBanquet && installationBanquet !== '') optionalFee += optionalPrices['installation-banquet'] || 0;
+    
+    // Calculate optional fees based on selections
+    if (poolsideParty && poolsideParty !== '') optionalFee += 50;
+    if (communityService && communityService !== '') optionalFee += 30;
+    if (installationBanquet && installationBanquet !== '') optionalFee += 120;
 
     const totalAmount = registrationFee + optionalFee;
 
@@ -86,6 +82,49 @@ module.exports = async (req, res) => {
     else if (districtCabinetPosition && districtCabinetPosition !== '') primaryPosition = districtCabinetPosition;
     else if (clubPosition && clubPosition !== '') primaryPosition = clubPosition;
     else if (positionInNgo && positionInNgo !== '') primaryPosition = positionInNgo;
+
+    // First, try to create the table with new schema if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS registrations (
+          id SERIAL PRIMARY KEY,
+          first_name VARCHAR(100) NOT NULL,
+          last_name VARCHAR(100) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          phone VARCHAR(20),
+          organization VARCHAR(255),
+          position VARCHAR(255),
+          registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          status VARCHAR(20) DEFAULT 'pending',
+          gender VARCHAR(20),
+          address TEXT,
+          district VARCHAR(100),
+          other_district VARCHAR(100),
+          ppoas_position VARCHAR(100),
+          district_cabinet_position VARCHAR(100),
+          club_position VARCHAR(100),
+          position_in_ngo VARCHAR(100),
+          other_ngos TEXT,
+          registration_type VARCHAR(50),
+          registration_fee INTEGER DEFAULT 0,
+          optional_fee INTEGER DEFAULT 0,
+          total_amount INTEGER DEFAULT 0,
+          vegetarian VARCHAR(20),
+          poolside_party VARCHAR(50),
+          community_service VARCHAR(50),
+          installation_banquet VARCHAR(50),
+          terms_conditions BOOLEAN DEFAULT FALSE,
+          marketing_emails BOOLEAN DEFAULT FALSE,
+          privacy_policy BOOLEAN DEFAULT FALSE,
+          registration_id VARCHAR(50) UNIQUE,
+          payment_slip_url VARCHAR(500),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+    } catch (createError) {
+      console.log('Table creation note:', createError.message);
+    }
 
     // Insert registration into database
     const result = await sql`
