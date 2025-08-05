@@ -5,17 +5,13 @@
   "main": "index.js",
   "type": "commonjs",
   "engines": {
-    "node": "22.x",
-    "npm": ">=10.0.0"
+    "node": "20.x"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.5.0",
-    "pg": "^8.11.3"
+    "@vercel/postgres": "^0.10.0"
   },
   "scripts": {
-    "build": "npm install && echo 'Build completed successfully'",
-    "start": "echo 'This is a serverless application'",
-    "postinstall": "echo 'Dependencies installed successfully'",
-    "vercel-build": "npm install"
+    "build": "echo 'Build completed successfully'",
+    "start": "echo 'This is a serverless application'"
   }
 }
