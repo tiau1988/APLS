@@ -119,7 +119,7 @@ export default function handler(req, res) {
     success: true,
     message: "Simple test endpoint with database connectivity test",
     timestamp: new Date().toISOString(),
-    deployment_trigger: "Enhanced database connectivity with pg module test",
+    deployment_trigger: "Fixed register endpoint - Force Deploy v2",
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       VERCEL: process.env.VERCEL,
