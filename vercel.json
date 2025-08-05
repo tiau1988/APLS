@@ -1,9 +1,7 @@
 {
-  "buildCommand": "npm install",
-  "installCommand": "npm install",
   "functions": {
     "api/**/*.js": {
-      "runtime": "nodejs22.x"
+      "runtime": "nodejs20.x"
     }
   },
   "headers": [
