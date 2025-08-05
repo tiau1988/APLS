@@ -63,6 +63,24 @@ module.exports = async (req, res) => {
         POSTGRES_URL: process.env.POSTGRES_URL ? 'Set' : 'Not set',
         POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL ? 'Set' : 'Not set',
         POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING ? 'Set' : 'Not set'
+      },
+      database_modules: {
+        vercel_postgres: (() => {
+          try {
+            require.resolve('@vercel/postgres');
+            return 'Available';
+          } catch (e) {
+            return 'Not available: ' + e.message;
+          }
+        })(),
+        pg: (() => {
+          try {
+            require.resolve('pg');
+            return 'Available';
+          } catch (e) {
+            return 'Not available: ' + e.message;
+          }
+        })()
       }
     });
 
