@@ -17,40 +17,85 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch all registrations with summary data
-    const registrations = await sql`
-      SELECT 
-        id as registration_id,
-        CONCAT(first_name, ' ', last_name) as full_name,
-        email,
-        phone,
-        organization as club_name,
-        district,
-        COALESCE(
-          NULLIF(ppoas_position, ''),
-          NULLIF(district_cabinet_position, ''),
-          NULLIF(club_position, ''),
-          NULLIF(position_in_ngo, ''),
-          position
-        ) as position,
-        registration_type,
-        total_amount,
-        status,
-        registration_date as created_at,
-        registration_id as reg_id
-      FROM registrations 
-      ORDER BY registration_date DESC
-    `;
+    // First check if table exists and what columns are available
+    let registrations;
+    let stats;
+    
+    try {
+      // Try the full query with new columns
+      registrations = await sql`
+        SELECT 
+          id as registration_id,
+          CONCAT(first_name, ' ', last_name) as full_name,
+          email,
+          phone,
+          organization as club_name,
+          COALESCE(district, '') as district,
+          COALESCE(
+            NULLIF(ppoas_position, ''),
+            NULLIF(district_cabinet_position, ''),
+            NULLIF(club_position, ''),
+            NULLIF(position_in_ngo, ''),
+            position
+          ) as position,
+          COALESCE(registration_type, '') as registration_type,
+          COALESCE(total_amount, 0) as total_amount,
+          status,
+          registration_date as created_at,
+          COALESCE(registration_id, '') as reg_id
+        FROM registrations 
+        ORDER BY registration_date DESC
+      `;
+    } catch (columnError) {
+      // Fallback to basic columns if new columns don't exist
+      console.log('Using fallback query due to:', columnError.message);
+      registrations = await sql`
+        SELECT 
+          id as registration_id,
+          CONCAT(first_name, ' ', last_name) as full_name,
+          email,
+          phone,
+          organization as club_name,
+          '' as district,
+          COALESCE(position, '') as position,
+          '' as registration_type,
+          COALESCE(total_amount, 0) as total_amount,
+          status,
+          registration_date as created_at,
+          '' as reg_id
+        FROM registrations 
+        ORDER BY registration_date DESC
+      `;
+    }
 
     // Get summary statistics
-    const stats = await sql`
-      SELECT 
-        COUNT(*) as total_registrations,
-        COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
-        COALESCE(SUM(total_amount), 0) as total_revenue
-      FROM registrations
-    `;
+    try {
+      stats = await sql`
+        SELECT 
+          COUNT(*) as total_registrations,
+          COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+          COALESCE(SUM(total_amount), 0) as total_revenue,
+          COUNT(CASE WHEN registration_type = 'early-bird' THEN 1 END) as early_bird_count,
+          COUNT(CASE WHEN registration_type = 'standard' THEN 1 END) as standard_count,
+          COUNT(CASE WHEN registration_type = 'late' THEN 1 END) as late_count
+        FROM registrations
+      `;
+    } catch (statsError) {
+      // Fallback stats query
+      console.log('Using fallback stats due to:', statsError.message);
+      stats = await sql`
+        SELECT 
+          COUNT(*) as total_registrations,
+          COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+          COALESCE(SUM(total_amount), 0) as total_revenue,
+          0 as early_bird_count,
+          0 as standard_count,
+          0 as late_count
+        FROM registrations
+      `;
+    }
 
     res.status(200).json({
       success: true,

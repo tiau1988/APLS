@@ -83,47 +83,56 @@ module.exports = async (req, res) => {
     else if (clubPosition && clubPosition !== '') primaryPosition = clubPosition;
     else if (positionInNgo && positionInNgo !== '') primaryPosition = positionInNgo;
 
-    // First, try to create the table with new schema if it doesn't exist
-    try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS registrations (
-          id SERIAL PRIMARY KEY,
-          first_name VARCHAR(100) NOT NULL,
-          last_name VARCHAR(100) NOT NULL,
-          email VARCHAR(255) UNIQUE NOT NULL,
-          phone VARCHAR(20),
-          organization VARCHAR(255),
-          position VARCHAR(255),
-          registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          status VARCHAR(20) DEFAULT 'pending',
-          gender VARCHAR(20),
-          address TEXT,
-          district VARCHAR(100),
-          other_district VARCHAR(100),
-          ppoas_position VARCHAR(100),
-          district_cabinet_position VARCHAR(100),
-          club_position VARCHAR(100),
-          position_in_ngo VARCHAR(100),
-          other_ngos TEXT,
-          registration_type VARCHAR(50),
-          registration_fee INTEGER DEFAULT 0,
-          optional_fee INTEGER DEFAULT 0,
-          total_amount INTEGER DEFAULT 0,
-          vegetarian VARCHAR(20),
-          poolside_party VARCHAR(50),
-          community_service VARCHAR(50),
-          installation_banquet VARCHAR(50),
-          terms_conditions BOOLEAN DEFAULT FALSE,
-          marketing_emails BOOLEAN DEFAULT FALSE,
-          privacy_policy BOOLEAN DEFAULT FALSE,
-          registration_id VARCHAR(50) UNIQUE,
-          payment_slip_url VARCHAR(500),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
-    } catch (createError) {
-      console.log('Table creation note:', createError.message);
+    // First, ensure basic table exists
+    await sql`
+      CREATE TABLE IF NOT EXISTS registrations (
+        id SERIAL PRIMARY KEY,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        phone VARCHAR(20),
+        organization VARCHAR(255),
+        position VARCHAR(255),
+        total_amount INTEGER DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'pending',
+        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Try to add new columns if they don't exist
+    const newColumns = [
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS gender VARCHAR(20)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS address TEXT',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS district VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS other_district VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS ppoas_position VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS district_cabinet_position VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS club_position VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS position_in_ngo VARCHAR(100)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS other_ngos TEXT',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS registration_type VARCHAR(50)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS registration_fee INTEGER DEFAULT 0',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS optional_fee INTEGER DEFAULT 0',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS vegetarian VARCHAR(20)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS poolside_party VARCHAR(50)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS community_service VARCHAR(50)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS installation_banquet VARCHAR(50)',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS terms_conditions BOOLEAN DEFAULT FALSE',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS marketing_emails BOOLEAN DEFAULT FALSE',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS privacy_policy BOOLEAN DEFAULT FALSE',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS registration_id VARCHAR(50) UNIQUE',
+      'ALTER TABLE registrations ADD COLUMN IF NOT EXISTS payment_slip_url VARCHAR(500)'
+    ];
+
+    for (const columnSql of newColumns) {
+      try {
+        await sql.query(columnSql);
+      } catch (error) {
+        // Column might already exist, continue
+        console.log('Column addition note:', error.message);
+      }
     }
 
     // Insert registration into database
