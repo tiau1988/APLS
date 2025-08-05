@@ -1,3 +1,4 @@
+// Updated for Node.js 22.x deployment
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
