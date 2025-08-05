@@ -33,7 +33,19 @@ module.exports = async (req, res) => {
     }
 
     // Try to import and test database connection
-    const { sql } = require('@vercel/postgres');
+    let sql;
+    try {
+      sql = require('@vercel/postgres').sql;
+    } catch (importError) {
+      return res.status(500).json({
+        success: false,
+        error: 'Database module not available',
+        details: importError.message,
+        environment_variables: envStatus,
+        message: 'The @vercel/postgres package is not installed or available'
+      });
+    }
+    
     const result = await sql`SELECT NOW() as current_time`;
     
     res.status(200).json({

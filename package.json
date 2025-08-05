@@ -2,11 +2,16 @@
   "name": "aplls-2026",
   "version": "1.0.0",
   "description": "Asia Pacific Lions Leaders Summit 2026 - Official Event Registration Website",
+  "main": "index.js",
   "engines": {
-    "node": "18.19.0",
+    "node": "18.x",
     "npm": ">=8.0.0"
   },
   "dependencies": {
     "@vercel/postgres": "^0.5.0"
+  },
+  "scripts": {
+    "build": "echo 'No build step required'",
+    "start": "echo 'This is a serverless application'"
   }
 }
