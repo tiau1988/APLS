@@ -13,8 +13,9 @@
     "pg": "^8.11.3"
   },
   "scripts": {
-    "build": "npm install",
+    "build": "npm install && echo 'Build completed successfully'",
     "start": "echo 'This is a serverless application'",
-    "postinstall": "echo 'Dependencies installed successfully'"
+    "postinstall": "echo 'Dependencies installed successfully'",
+    "vercel-build": "npm install"
   }
 }
