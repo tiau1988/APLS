@@ -42,8 +42,9 @@ module.exports = async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: 'Simple test endpoint working with database checks',
+    message: 'Simple test endpoint working with database checks - Node.js 22.x deployment',
     timestamp: new Date().toISOString(),
+    deployment_trigger: 'Force fresh deployment with Node.js 22.x',
     environment: {
       NODE_ENV: process.env.NODE_ENV || 'not set',
       VERCEL: process.env.VERCEL || 'not set',
