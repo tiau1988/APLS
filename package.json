@@ -8,8 +8,7 @@
     "node": "20.x"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
-    "pg": "^8.11.3"
+    "@vercel/postgres": "^0.10.0"
   },
   "scripts": {
     "build": "echo 'Build completed successfully'",

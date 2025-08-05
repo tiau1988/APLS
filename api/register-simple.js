@@ -1,13 +1,5 @@
 // Registration API with Neon database integration
-const { Pool } = require('pg');
-
-// Create a connection pool
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const { sql } = require('@vercel/postgres');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -24,9 +16,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     try {
       // Test database connection
-      const client = await pool.connect();
-      const result = await client.query('SELECT COUNT(*) as count FROM registrations');
-      client.release();
+      const result = await sql`SELECT COUNT(*) as count FROM registrations`;
       
       return res.status(200).json({
         message: "Registration API with Neon Database is operational",
@@ -101,64 +91,51 @@ module.exports = async (req, res) => {
     // Generate a registration ID
     const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Save to database
-    const client = await pool.connect();
+    // Save to database using @vercel/postgres
+    const result = await sql`
+      INSERT INTO registrations (
+        first_name, last_name, email, phone, organization, position,
+        gender, address, district, other_district, ppoas_position,
+        district_cabinet_position, club_position, position_in_ngo, other_ngos,
+        registration_type, registration_fee, optional_fee, total_amount,
+        vegetarian, poolside_party, community_service, installation_banquet,
+        terms_conditions, marketing_emails, privacy_policy, registration_id,
+        status
+      ) VALUES (
+        ${firstName || ''}, ${lastName || ''}, ${email}, ${phone || ''}, 
+        ${clubName || ''}, ${position || ''}, ${gender || ''}, ${address || ''},
+        ${district || ''}, ${otherDistrict || ''}, ${ppoasPosition || ''},
+        ${districtCabinetPosition || ''}, ${clubPosition || ''}, ${positionInNgo || ''}, ${otherNgos || ''},
+        ${registrationType}, ${registrationFee}, ${optionalFee}, ${totalAmount},
+        ${vegetarian || ''}, ${poolsideParty || ''}, ${communityService || ''}, ${installationBanquet || ''},
+        ${termsConditions || false}, ${marketingEmails || false}, ${privacyPolicy || false},
+        ${registrationId}, ${'pending'}
+      ) RETURNING id, registration_date
+    `;
     
-    try {
-      const insertQuery = `
-        INSERT INTO registrations (
-          first_name, last_name, email, phone, organization, position,
-          gender, address, district, other_district, ppoas_position,
-          district_cabinet_position, club_position, position_in_ngo, other_ngos,
-          registration_type, registration_fee, optional_fee, total_amount,
-          vegetarian, poolside_party, community_service, installation_banquet,
-          terms_conditions, marketing_emails, privacy_policy, registration_id,
-          status
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-          $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
-        ) RETURNING id, registration_date
-      `;
-      
-      const values = [
-        firstName || '', lastName || '', email, phone || '', 
-        clubName || '', position || '', gender || '', address || '',
-        district || '', otherDistrict || '', ppoasPosition || '',
-        districtCabinetPosition || '', clubPosition || '', positionInNgo || '', otherNgos || '',
-        registrationType, registrationFee, optionalFee, totalAmount,
-        vegetarian || '', poolsideParty || '', communityService || '', installationBanquet || '',
-        termsConditions || false, marketingEmails || false, privacyPolicy || false,
-        registrationId, 'pending'
-      ];
+    const savedRegistration = result.rows[0];
 
-      const result = await client.query(insertQuery, values);
-      const savedRegistration = result.rows[0];
-
-      // Return success response
-      return res.status(200).json({
-        success: true,
-        message: "Registration saved successfully to database!",
-        data: {
-          id: savedRegistration.id,
-          registrationId,
-          fullName: fullName || `${firstName} ${lastName}`,
-          email,
-          phone,
-          clubName,
-          district,
-          position,
-          registrationType,
-          totalAmount,
-          registrationFee,
-          optionalFee,
-          registrationDate: savedRegistration.registration_date,
-          status: 'pending'
-        }
-      });
-
-    } finally {
-      client.release();
-    }
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: "Registration saved successfully to database!",
+      data: {
+        id: savedRegistration.id,
+        registrationId,
+        fullName: fullName || `${firstName} ${lastName}`,
+        email,
+        phone,
+        clubName,
+        district,
+        position,
+        registrationType,
+        totalAmount,
+        registrationFee,
+        optionalFee,
+        registrationDate: savedRegistration.registration_date,
+        status: 'pending'
+      }
+    });
 
   } catch (error) {
     console.error('Registration error:', error);
