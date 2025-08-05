@@ -219,11 +219,24 @@ function toggleOtherDistrict() {
 // Live Registration Counter Functions
 async function fetchRegistrationCounts() {
     try {
-        const response = await fetch('/api/registration-count');
+        const response = await fetch('/api/register-simple');
         if (response.ok) {
             const data = await response.json();
-            updateCounterDisplay(data);
-            return data;
+            // Transform the simple API response to match expected format
+            const transformedData = {
+                counts: {
+                    total: data.totalRegistrations || 0,
+                    earlyBird: data.earlyBirdCount || 0,
+                    recent24h: data.recent24h || 0
+                },
+                earlyBird: {
+                    available: (data.earlyBirdCount || 0) < 150,
+                    remaining: Math.max(0, 150 - (data.earlyBirdCount || 0)),
+                    percentage: Math.round(((data.earlyBirdCount || 0) / 150) * 100)
+                }
+            };
+            updateCounterDisplay(transformedData);
+            return transformedData;
         }
     } catch (error) {
         console.log('Live count API not available, using fallback...');
@@ -409,10 +422,10 @@ function validateForm() {
     return isValid;
 }
 
-// Submit registration to Vercel Postgres database
+// Submit registration to working API
 async function submitRegistration(data) {
     try {
-        const response = await fetch('/api/register', {
+        const response = await fetch('/api/register-simple', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
