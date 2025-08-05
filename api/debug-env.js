@@ -45,6 +45,8 @@ module.exports = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      timestamp: new Date().toISOString(),
+      node_version_update: "Updated to Node.js 22.x",
       runtime_info: {
         node_version: process.version,
         platform: process.platform,
