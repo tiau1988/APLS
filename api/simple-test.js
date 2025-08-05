@@ -52,11 +52,37 @@ export default function handler(req, res) {
     nodeModulesCheck = `Error checking: ${error.message}`;
   }
 
+  // Test native database URL parsing
+  let databaseConnection = 'Not tested';
+  if (process.env.POSTGRES_URL) {
+    try {
+      const dbUrl = new URL(process.env.POSTGRES_URL);
+      databaseConnection = {
+        success: true,
+        host: dbUrl.hostname,
+        port: dbUrl.port,
+        database: dbUrl.pathname.slice(1),
+        username: dbUrl.username,
+        ssl_required: dbUrl.searchParams.get('sslmode') === 'require'
+      };
+    } catch (error) {
+      databaseConnection = {
+        success: false,
+        error: error.message
+      };
+    }
+  } else {
+    databaseConnection = {
+      success: false,
+      error: 'POSTGRES_URL not found'
+    };
+  }
+
   res.status(200).json({
     success: true,
-    message: "Simple test endpoint with enhanced diagnostics",
+    message: "Simple test endpoint with database connectivity test",
     timestamp: new Date().toISOString(),
-    deployment_trigger: "Enhanced module diagnostics",
+    deployment_trigger: "Native database connectivity test",
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       VERCEL: process.env.VERCEL,
@@ -68,9 +94,10 @@ export default function handler(req, res) {
       vercel_postgres: vercelPostgresStatus,
       pg: pgStatus
     },
+    database_connection: databaseConnection,
     diagnostics: {
       node_modules: nodeModulesCheck
     },
-    note: "Enhanced diagnostics for module loading issues"
+    note: "Enhanced diagnostics with native database connectivity test"
   });
 }
