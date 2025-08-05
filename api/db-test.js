@@ -1,4 +1,5 @@
 module.exports = async (req, res) => {
+  // Database connection test endpoint - v2.0
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

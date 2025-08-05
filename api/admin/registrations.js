@@ -17,42 +17,46 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get all registrations with details
-    const result = await sql`
+    // Fetch all registrations with summary data
+    const registrations = await sql`
       SELECT 
-        id,
-        first_name,
-        last_name,
+        id as registration_id,
+        CONCAT(first_name, ' ', last_name) as full_name,
         email,
         phone,
-        organization,
-        position,
-        country,
-        dietary_restrictions,
-        accessibility_needs,
-        emergency_contact_name,
-        emergency_contact_phone,
-        registration_date,
-        status
+        organization as club_name,
+        district,
+        COALESCE(
+          NULLIF(ppoas_position, ''),
+          NULLIF(district_cabinet_position, ''),
+          NULLIF(club_position, ''),
+          NULLIF(position_in_ngo, ''),
+          position
+        ) as position,
+        registration_type,
+        total_amount,
+        status,
+        registration_date as created_at,
+        registration_id as reg_id
       FROM registrations 
-      ORDER BY registration_date DESC;
+      ORDER BY registration_date DESC
     `;
 
     // Get summary statistics
-    const statsResult = await sql`
+    const stats = await sql`
       SELECT 
         COUNT(*) as total_registrations,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
         COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
-        COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_count
-      FROM registrations;
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+        COALESCE(SUM(total_amount), 0) as total_revenue
+      FROM registrations
     `;
 
     res.status(200).json({
       success: true,
-      registrations: result.rows,
-      statistics: statsResult.rows[0],
-      total: result.rows.length
+      registrations: registrations.rows,
+      statistics: stats.rows[0],
+      total: registrations.rows.length
     });
 
   } catch (error) {

@@ -20,26 +20,72 @@ module.exports = async (req, res) => {
 
   try {
     const {
-      firstName,
-      lastName,
+      fullName,
       email,
       phone,
-      organization,
-      position,
-      country,
-      dietaryRestrictions,
-      accessibilityNeeds,
-      emergencyContactName,
-      emergencyContactPhone
+      gender,
+      address,
+      clubName,
+      district,
+      otherDistrict,
+      ppoasPosition,
+      districtCabinetPosition,
+      clubPosition,
+      positionInNgo,
+      otherNgos,
+      registrationType,
+      vegetarian,
+      poolsideParty,
+      communityService,
+      installationBanquet,
+      termsConditions,
+      marketingEmails,
+      privacyPolicy,
+      registrationDate,
+      registrationId
     } = req.body;
 
     // Basic validation
-    if (!firstName || !lastName || !email) {
+    if (!fullName || !email || !clubName || !district || !registrationType) {
       return res.status(400).json({
         success: false,
-        error: 'First name, last name, and email are required'
+        error: 'Full name, email, club name, district, and registration type are required'
       });
     }
+
+    // Split full name into first and last name
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Calculate total amount based on registration type and optional programs
+    let registrationFee = 0;
+    const registrationPrices = {
+      'early-bird': 260,
+      'standard': 390,
+      'late': 430
+    };
+    registrationFee = registrationPrices[registrationType] || 0;
+
+    let optionalFee = 0;
+    const optionalPrices = {
+      'poolside-party': 50,
+      'community-service': 30,
+      'installation-banquet': 120
+    };
+
+    if (poolsideParty && poolsideParty !== '') optionalFee += optionalPrices['poolside-party'] || 0;
+    if (communityService && communityService !== '') optionalFee += optionalPrices['community-service'] || 0;
+    if (installationBanquet && installationBanquet !== '') optionalFee += optionalPrices['installation-banquet'] || 0;
+
+    const totalAmount = registrationFee + optionalFee;
+
+    // Determine primary position
+    let primaryPosition = '';
+    if (ppoasPosition && ppoasPosition !== '') primaryPosition = ppoasPosition;
+    else if (districtCabinetPosition && districtCabinetPosition !== '') primaryPosition = districtCabinetPosition;
+    else if (clubPosition && clubPosition !== '') primaryPosition = clubPosition;
+    else if (positionInNgo && positionInNgo !== '') primaryPosition = positionInNgo;
 
     // Insert registration into database
     const result = await sql`
@@ -50,25 +96,59 @@ module.exports = async (req, res) => {
         phone,
         organization,
         position,
-        country,
-        dietary_restrictions,
-        accessibility_needs,
-        emergency_contact_name,
-        emergency_contact_phone,
-        status
+        registration_date,
+        status,
+        gender,
+        address,
+        district,
+        other_district,
+        ppoas_position,
+        district_cabinet_position,
+        club_position,
+        position_in_ngo,
+        other_ngos,
+        registration_type,
+        registration_fee,
+        optional_fee,
+        total_amount,
+        vegetarian,
+        poolside_party,
+        community_service,
+        installation_banquet,
+        terms_conditions,
+        marketing_emails,
+        privacy_policy,
+        registration_id
       ) VALUES (
         ${firstName},
         ${lastName},
         ${email},
         ${phone || null},
-        ${organization || null},
-        ${position || null},
-        ${country || null},
-        ${dietaryRestrictions || null},
-        ${accessibilityNeeds || null},
-        ${emergencyContactName || null},
-        ${emergencyContactPhone || null},
-        'pending'
+        ${clubName},
+        ${primaryPosition || null},
+        ${registrationDate || new Date().toISOString()},
+        'pending',
+        ${gender || null},
+        ${address || null},
+        ${district},
+        ${otherDistrict || null},
+        ${ppoasPosition || null},
+        ${districtCabinetPosition || null},
+        ${clubPosition || null},
+        ${positionInNgo || null},
+        ${otherNgos || null},
+        ${registrationType},
+        ${registrationFee},
+        ${optionalFee},
+        ${totalAmount},
+        ${vegetarian || null},
+        ${poolsideParty || null},
+        ${communityService || null},
+        ${installationBanquet || null},
+        ${termsConditions === 'on' || termsConditions === true},
+        ${marketingEmails === 'on' || marketingEmails === true},
+        ${privacyPolicy === 'on' || privacyPolicy === true},
+        ${registrationId || `APC2026-${Date.now()}`}
       )
       RETURNING *;
     `;
