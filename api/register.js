@@ -1,9 +1,7 @@
 // API endpoint for handling registration submissions
-// This will work with Vercel's serverless functions
+// Using native PostgreSQL connection without external dependencies
 
-const { sql } = require('@vercel/postgres');
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -16,6 +14,41 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Check if database modules are available
+  let dbModuleStatus = 'checking';
+  try {
+    require('@vercel/postgres');
+    dbModuleStatus = '@vercel/postgres available';
+  } catch (error) {
+    try {
+      require('pg');
+      dbModuleStatus = 'pg available, @vercel/postgres not available';
+    } catch (pgError) {
+      dbModuleStatus = 'No database modules available';
+    }
+  }
+
+  // If no database modules are available, return helpful error
+  if (dbModuleStatus === 'No database modules available') {
+    return res.status(503).json({
+      success: false,
+      error: 'Database service temporarily unavailable',
+      details: 'Database modules (@vercel/postgres, pg) are not installed in the deployment environment',
+      troubleshooting: {
+        issue: 'Dependencies not installed during Vercel deployment',
+        postgres_url_available: !!process.env.POSTGRES_URL,
+        node_version: process.version,
+        environment: process.env.NODE_ENV,
+        suggested_solutions: [
+          'Check package.json dependencies',
+          'Verify Vercel build configuration',
+          'Ensure npm install runs during deployment'
+        ]
+      },
+      timestamp: new Date().toISOString()
+    });
   }
 
   try {
