@@ -1,4 +1,6 @@
-// Registration API with basic database connectivity
+// Registration API with Neon database connectivity
+const { Pool } = require('pg');
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,6 +13,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
+    let pool;
     try {
       // Check if database is configured
       if (!process.env.POSTGRES_URL) {
@@ -29,27 +32,41 @@ module.exports = async (req, res) => {
         });
       }
 
-      // For now, return mock data since we're having dependency issues
+      // Connect to Neon database
+      pool = new Pool({
+        connectionString: process.env.POSTGRES_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+
+      // Get real statistics from database
+      const totalResult = await pool.query('SELECT COUNT(*) as total FROM registrations');
+      const earlyBirdResult = await pool.query("SELECT COUNT(*) as count FROM registrations WHERE registration_type = 'early-bird'");
+      const recent24hResult = await pool.query("SELECT COUNT(*) as count FROM registrations WHERE registration_date >= NOW() - INTERVAL '24 hours'");
+
+      const totalRegistrations = parseInt(totalResult.rows[0].total);
+      const earlyBirdCount = parseInt(earlyBirdResult.rows[0].count);
+      const recent24hCount = parseInt(recent24hResult.rows[0].count);
+
       return res.status(200).json({
-        status: 'ready_mock',
-        message: 'Database configured but using mock data due to dependency issues',
-        total_registrations: 12,
-        early_bird_count: 8,
-        recent_24h_count: 2,
-        database_connected: false,
-        reason: 'Using mock data while resolving pg module issues',
+        status: 'ready_live',
+        message: 'Connected to Neon database - live data',
+        total_registrations: totalRegistrations,
+        early_bird_count: earlyBirdCount,
+        recent_24h_count: recent24hCount,
+        database_connected: true,
+        reason: 'Live data from Neon PostgreSQL',
         environment: {
           node_version: process.version,
-          postgres_url_configured: !!process.env.POSTGRES_URL
+          postgres_url_configured: true
         }
       });
 
     } catch (error) {
-      console.error('API error:', error);
+      console.error('Database error:', error);
       
       return res.status(200).json({
         status: 'fallback',
-        message: 'API error - using fallback data',
+        message: 'Database error - using fallback data',
         total_registrations: 5,
         early_bird_count: 3,
         recent_24h_count: 1,
@@ -60,10 +77,15 @@ module.exports = async (req, res) => {
           postgres_url_configured: !!process.env.POSTGRES_URL
         }
       });
+    } finally {
+      if (pool) {
+        await pool.end();
+      }
     }
   }
 
   if (req.method === 'POST') {
+    let pool;
     try {
       const {
         firstName, lastName, email, phone, clubName, position, gender, address,
@@ -81,6 +103,20 @@ module.exports = async (req, res) => {
         });
       }
 
+      // Check if database is configured
+      if (!process.env.POSTGRES_URL) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database not configured - cannot save registration'
+        });
+      }
+
+      // Connect to Neon database
+      pool = new Pool({
+        connectionString: process.env.POSTGRES_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+
       // Calculate total amount
       const regFee = parseFloat(registrationFee) || 0;
       const optFee = parseFloat(optionalFee) || 0;
@@ -89,17 +125,40 @@ module.exports = async (req, res) => {
       // Generate a registration ID
       const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // For now, return success without actually saving to database
+      // Save to database
+      const insertQuery = `
+        INSERT INTO registrations (
+          first_name, last_name, email, phone, organization, position, gender, address,
+          district, other_district, ppoas_position, district_cabinet_position, club_position,
+          position_in_ngo, other_ngos, registration_type, registration_fee, optional_fee, total_amount,
+          vegetarian, poolside_party, community_service, installation_banquet,
+          terms_conditions, marketing_emails, privacy_policy, registration_id, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+        RETURNING id, registration_date
+      `;
+
+      const values = [
+        firstName, lastName, email, phone, clubName, position, gender, address,
+        district, otherDistrict, ppoasPosition, districtCabinetPosition, clubPosition,
+        positionInNgo, otherNgos, registrationType, regFee, optFee, totalAmount,
+        vegetarian, poolsideParty, communityService, installationBanquet,
+        termsConditions, marketingEmails, privacyPolicy, registrationId, 'pending'
+      ];
+
+      const result = await pool.query(insertQuery, values);
+      const savedRegistration = result.rows[0];
+
       return res.status(201).json({
         success: true,
-        message: 'Registration received successfully! (Mock mode - data not saved to database)',
+        message: 'Registration saved successfully to Neon database!',
         registration: {
-          id: registrationId,
+          id: savedRegistration.id,
+          registrationId: registrationId,
           fullName: `${firstName} ${lastName}`,
           email,
           registrationType,
           totalAmount,
-          registrationDate: new Date().toISOString(),
+          registrationDate: savedRegistration.registration_date,
           status: 'pending'
         }
       });
@@ -107,11 +166,24 @@ module.exports = async (req, res) => {
     } catch (error) {
       console.error('Registration error:', error);
       
+      // Handle duplicate email error
+      if (error.code === '23505' && error.constraint === 'registrations_email_key') {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address already registered',
+          error: 'duplicate_email'
+        });
+      }
+
       return res.status(500).json({
         success: false,
         message: 'Registration failed due to server error',
         error: error.message
       });
+    } finally {
+      if (pool) {
+        await pool.end();
+      }
     }
   }
 

@@ -1,11 +1,16 @@
-const { sql } = require('@vercel/postgres');
+const { Pool } = require('pg');
 
 async function initializeDatabase() {
+  const pool = new Pool({
+    connectionString: process.env.POSTGRES_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
+
   try {
     console.log('🗄️ Initializing database...');
     
     // Create registrations table
-    await sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS registrations (
         id SERIAL PRIMARY KEY,
         first_name VARCHAR(100) NOT NULL,
@@ -41,17 +46,17 @@ async function initializeDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `;
+    `);
     
     // Create indexes for better performance
-    await sql`CREATE INDEX IF NOT EXISTS idx_registrations_email ON registrations(email)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_registrations_date ON registrations(registration_date)`;
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_registrations_email ON registrations(email)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_registrations_date ON registrations(registration_date)');
     
     console.log('✅ Database tables created successfully!');
     
     // Check if we have any data
-    const count = await sql`SELECT COUNT(*) as total FROM registrations`;
+    const count = await pool.query('SELECT COUNT(*) as total FROM registrations');
     console.log(`📊 Current registrations: ${count.rows[0].total}`);
     
     return {
@@ -63,6 +68,8 @@ async function initializeDatabase() {
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     throw error;
+  } finally {
+    await pool.end();
   }
 }
 
