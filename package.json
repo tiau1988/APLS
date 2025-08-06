@@ -8,17 +8,22 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
     "pg": "^8.11.3",
     "postgres": "^3.4.3"
   },
-  "devDependencies": {},
   "scripts": {
     "build": "echo 'Build completed successfully'",
     "start": "echo 'This is a serverless application'",
     "dev": "echo 'Development mode'",
     "vercel-build": "echo 'Vercel build completed'"
   },
-  "keywords": ["vercel", "serverless", "postgres", "registration"],
+  "keywords": [
+    "vercel",
+    "serverless",
+    "postgres",
+    "registration"
+  ],
   "author": "APLLS 2026",
   "license": "MIT"
 }

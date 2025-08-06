@@ -219,28 +219,52 @@ function toggleOtherDistrict() {
 // Live Registration Counter Functions
 async function fetchRegistrationCounts() {
     try {
-        const response = await fetch('/api/register-simple');
+        const response = await fetch('/api/register');
         if (response.ok) {
             const data = await response.json();
-            // Transform the simple API response to match expected format
+            // Transform the production API response to match expected format
             const transformedData = {
                 counts: {
-                    total: data.totalRegistrations || 0,
-                    earlyBird: data.earlyBirdCount || 0,
-                    recent24h: data.recent24h || 0
+                    total: data.total_registrations || 0,
+                    earlyBird: data.early_bird_count || 0,
+                    recent24h: data.recent_24h_count || 0
                 },
                 earlyBird: {
-                    available: (data.earlyBirdCount || 0) < 150,
-                    remaining: Math.max(0, 150 - (data.earlyBirdCount || 0)),
-                    percentage: Math.round(((data.earlyBirdCount || 0) / 150) * 100)
+                    available: (data.early_bird_count || 0) < 150,
+                    remaining: Math.max(0, 150 - (data.early_bird_count || 0)),
+                    percentage: Math.round(((data.early_bird_count || 0) / 150) * 100)
                 }
             };
             updateCounterDisplay(transformedData);
             return transformedData;
         }
     } catch (error) {
-        console.log('Live count API not available, using fallback...');
-        // Fallback to localStorage count
+        console.log('Production API not available, trying fallback...');
+        // Try fallback endpoints
+        try {
+            const fallbackResponse = await fetch('/api/register-working');
+            if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                const transformedData = {
+                    counts: {
+                        total: fallbackData.total_registrations || 0,
+                        earlyBird: fallbackData.early_bird_count || 0,
+                        recent24h: fallbackData.recent_24h_count || 0
+                    },
+                    earlyBird: {
+                        available: (fallbackData.early_bird_count || 0) < 150,
+                        remaining: Math.max(0, 150 - (fallbackData.early_bird_count || 0)),
+                        percentage: Math.round(((fallbackData.early_bird_count || 0) / 150) * 100)
+                    }
+                };
+                updateCounterDisplay(transformedData);
+                return transformedData;
+            }
+        } catch (fallbackError) {
+            console.log('Fallback API also not available, using localStorage...');
+        }
+        
+        // Final fallback to localStorage count
         const localRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
         const fallbackData = {
             counts: {
@@ -422,10 +446,10 @@ function validateForm() {
     return isValid;
 }
 
-// Submit registration to working API
+// Submit registration to production API
 async function submitRegistration(data) {
     try {
-        const response = await fetch('/api/register-simple', {
+        const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -446,9 +470,33 @@ async function submitRegistration(data) {
         
         return result;
     } catch (error) {
-        console.error('Registration submission error:', error);
+        console.error('Production API error, trying fallback...', error);
         
-        // Fallback to localStorage if API fails
+        // Try fallback endpoint
+        try {
+            const fallbackResponse = await fetch('/api/register-working', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const fallbackResult = await fallbackResponse.json();
+            
+            if (fallbackResponse.ok) {
+                // Also save to localStorage as backup
+                const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
+                existingRegistrations.push(data);
+                localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
+                
+                return fallbackResult;
+            }
+        } catch (fallbackError) {
+            console.error('Fallback API also failed:', fallbackError);
+        }
+        
+        // Final fallback to localStorage if all APIs fail
         try {
             const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
             existingRegistrations.push(data);
@@ -456,7 +504,7 @@ async function submitRegistration(data) {
             
             return {
                 success: true,
-                message: 'Registration saved locally. Will sync when online.',
+                message: 'Registration saved locally. Will sync when database is available.',
                 registrationId: data.registrationId,
                 fallback: true
             };
