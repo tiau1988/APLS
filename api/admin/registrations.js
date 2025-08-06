@@ -1,7 +1,9 @@
 // Admin API endpoint for viewing all registrations
-const { sql } = require('@vercel/postgres');
+// Updated to work with shared storage system
 
-module.exports = async (req, res) => {
+import { getAllRegistrations, getRegistrationStats } from '../shared-storage.js';
+
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -17,91 +19,37 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // First check if table exists and what columns are available
-    let registrations;
-    let stats;
+    // Get all registrations from shared storage
+    const registrations = getAllRegistrations();
     
-    try {
-      // Try the full query with new columns
-      registrations = await sql`
-        SELECT 
-          id as registration_id,
-          CONCAT(first_name, ' ', last_name) as full_name,
-          email,
-          phone,
-          organization as club_name,
-          COALESCE(district, '') as district,
-          COALESCE(
-            NULLIF(ppoas_position, ''),
-            NULLIF(district_cabinet_position, ''),
-            NULLIF(club_position, ''),
-            NULLIF(position_in_ngo, ''),
-            position
-          ) as position,
-          COALESCE(registration_type, '') as registration_type,
-          COALESCE(total_amount, 0) as total_amount,
-          status,
-          registration_date as created_at,
-          COALESCE(registration_id, '') as reg_id
-        FROM registrations 
-        ORDER BY registration_date DESC
-      `;
-    } catch (columnError) {
-      // Fallback to basic columns if new columns don't exist
-      console.log('Using fallback query due to:', columnError.message);
-      registrations = await sql`
-        SELECT 
-          id as registration_id,
-          CONCAT(first_name, ' ', last_name) as full_name,
-          email,
-          phone,
-          organization as club_name,
-          '' as district,
-          COALESCE(position, '') as position,
-          '' as registration_type,
-          COALESCE(total_amount, 0) as total_amount,
-          status,
-          registration_date as created_at,
-          '' as reg_id
-        FROM registrations 
-        ORDER BY registration_date DESC
-      `;
-    }
+    // Format registrations for admin display
+    const formattedRegistrations = registrations.map(reg => ({
+      registration_id: reg.registrationId,
+      full_name: `${reg.firstName} ${reg.lastName}`,
+      email: reg.email,
+      phone: reg.phone || '-',
+      club_name: reg.clubName || '-',
+      district: reg.district || '-',
+      position: reg.position || '-',
+      registration_type: reg.registrationType,
+      total_amount: reg.totalAmount,
+      status: reg.status,
+      created_at: reg.registrationDate
+    }));
 
-    // Get summary statistics
-    try {
-      stats = await sql`
-        SELECT 
-          COUNT(*) as total_registrations,
-          COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
-          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
-          COALESCE(SUM(total_amount), 0) as total_revenue,
-          COUNT(CASE WHEN registration_type = 'early-bird' THEN 1 END) as early_bird_count,
-          COUNT(CASE WHEN registration_type = 'standard' THEN 1 END) as standard_count,
-          COUNT(CASE WHEN registration_type = 'late' THEN 1 END) as late_count
-        FROM registrations
-      `;
-    } catch (statsError) {
-      // Fallback stats query
-      console.log('Using fallback stats due to:', statsError.message);
-      stats = await sql`
-        SELECT 
-          COUNT(*) as total_registrations,
-          COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed_count,
-          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
-          COALESCE(SUM(total_amount), 0) as total_revenue,
-          0 as early_bird_count,
-          0 as standard_count,
-          0 as late_count
-        FROM registrations
-      `;
-    }
+    // Get statistics from shared storage
+    const statistics = getRegistrationStats();
 
     res.status(200).json({
       success: true,
-      registrations: registrations.rows,
-      statistics: stats.rows[0],
-      total: registrations.rows.length
+      registrations: formattedRegistrations,
+      statistics: statistics,
+      total: formattedRegistrations.length,
+      system_info: {
+        storage_method: 'shared_memory',
+        note: 'Using shared storage - your new registrations will appear here!',
+        last_updated: new Date().toISOString()
+      }
     });
 
   } catch (error) {
@@ -112,4 +60,4 @@ module.exports = async (req, res) => {
       details: error.message
     });
   }
-};
+}
