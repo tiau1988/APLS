@@ -1,6 +1,4 @@
-// Registration API with Neon database integration
-const { sql } = require('@vercel/postgres');
-
+// Registration API - Simplified version without database dependency
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,71 +10,32 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Handle GET requests for testing
+  // Handle GET requests for testing and counter data
   if (req.method === 'GET') {
-    try {
-      // Check if environment variables are available
-      if (!process.env.POSTGRES_URL) {
-        return res.status(200).json({
-          message: "Registration API is operational (Database not configured)",
-          status: "ready_no_db",
-          database: {
-            connected: false,
-            reason: "POSTGRES_URL environment variable not set"
-          },
-          environment: {
-            node_version: process.version,
-            postgres_url_configured: false,
-            timestamp: new Date().toISOString()
-          },
-          totalRegistrations: 0,
-          earlyBirdCount: 0,
-          recent24h: 0
-        });
-      }
-
-      // Test database connection
-      const result = await sql`SELECT COUNT(*) as count FROM registrations`;
-      const earlyBirdResult = await sql`SELECT COUNT(*) as count FROM registrations WHERE registration_type = 'early-bird'`;
-      
-      return res.status(200).json({
-        message: "Registration API with Neon Database is operational",
-        status: "ready",
-        database: {
-          connected: true,
-          total_registrations: parseInt(result.rows[0].count)
-        },
-        environment: {
-          node_version: process.version,
-          postgres_url_configured: true,
-          timestamp: new Date().toISOString()
-        },
-        totalRegistrations: parseInt(result.rows[0].count),
-        earlyBirdCount: parseInt(earlyBirdResult.rows[0].count),
-        recent24h: 0
-      });
-    } catch (error) {
-      return res.status(200).json({
-        message: "Database connection failed, using fallback mode",
-        status: "fallback",
-        error: error.message,
-        environment: {
-          node_version: process.version,
-          postgres_url_configured: !!process.env.POSTGRES_URL,
-          timestamp: new Date().toISOString()
-        },
-        totalRegistrations: 0,
-        earlyBirdCount: 0,
-        recent24h: 0
-      });
-    }
+    // Return mock data for now (will be replaced with real database later)
+    return res.status(200).json({
+      message: "Registration API is operational (Mock data mode)",
+      status: "ready_mock",
+      database: {
+        connected: false,
+        reason: "Using mock data for testing"
+      },
+      environment: {
+        node_version: process.version,
+        postgres_url_configured: !!process.env.POSTGRES_URL,
+        timestamp: new Date().toISOString()
+      },
+      totalRegistrations: 15,
+      earlyBirdCount: 8,
+      recent24h: 3
+    });
   }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // For POST requests, validate and save to database
+  // For POST requests, validate and simulate saving
   try {
     const { 
       firstName, lastName, fullName, email, phone, 
@@ -118,36 +77,12 @@ module.exports = async (req, res) => {
     // Generate a registration ID
     const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Save to database using @vercel/postgres
-    const result = await sql`
-      INSERT INTO registrations (
-        first_name, last_name, email, phone, organization, position,
-        gender, address, district, other_district, ppoas_position,
-        district_cabinet_position, club_position, position_in_ngo, other_ngos,
-        registration_type, registration_fee, optional_fee, total_amount,
-        vegetarian, poolside_party, community_service, installation_banquet,
-        terms_conditions, marketing_emails, privacy_policy, registration_id,
-        status
-      ) VALUES (
-        ${firstName || ''}, ${lastName || ''}, ${email}, ${phone || ''}, 
-        ${clubName || ''}, ${position || ''}, ${gender || ''}, ${address || ''},
-        ${district || ''}, ${otherDistrict || ''}, ${ppoasPosition || ''},
-        ${districtCabinetPosition || ''}, ${clubPosition || ''}, ${positionInNgo || ''}, ${otherNgos || ''},
-        ${registrationType}, ${registrationFee}, ${optionalFee}, ${totalAmount},
-        ${vegetarian || ''}, ${poolsideParty || ''}, ${communityService || ''}, ${installationBanquet || ''},
-        ${termsConditions || false}, ${marketingEmails || false}, ${privacyPolicy || false},
-        ${registrationId}, ${'pending'}
-      ) RETURNING id, registration_date
-    `;
-    
-    const savedRegistration = result.rows[0];
-
-    // Return success response
+    // Simulate successful registration (no database save for now)
     return res.status(200).json({
       success: true,
-      message: "Registration saved successfully to database!",
+      message: "Registration received successfully! (Mock mode - data not saved to database)",
       data: {
-        id: savedRegistration.id,
+        id: Math.floor(Math.random() * 1000),
         registrationId,
         fullName: fullName || `${firstName} ${lastName}`,
         email,
@@ -159,7 +94,7 @@ module.exports = async (req, res) => {
         totalAmount,
         registrationFee,
         optionalFee,
-        registrationDate: savedRegistration.registration_date,
+        registrationDate: new Date().toISOString(),
         status: 'pending'
       }
     });
@@ -167,18 +102,9 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     
-    // Handle duplicate email error
-    if (error.code === '23505' && error.constraint === 'registrations_email_key') {
-      return res.status(400).json({
-        success: false,
-        error: 'Email already registered',
-        message: 'This email address has already been used for registration.'
-      });
-    }
-    
     return res.status(500).json({
       success: false,
-      error: 'Failed to save registration',
+      error: 'Failed to process registration',
       details: error.message
     });
   }
