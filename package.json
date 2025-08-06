@@ -10,8 +10,13 @@
   "dependencies": {
     "@vercel/postgres": "^0.10.0"
   },
+  "devDependencies": {},
   "scripts": {
     "build": "echo 'Build completed successfully'",
-    "start": "echo 'This is a serverless application'"
-  }
+    "start": "echo 'This is a serverless application'",
+    "dev": "echo 'Development mode'"
+  },
+  "keywords": ["vercel", "serverless", "postgres", "registration"],
+  "author": "APLLS 2026",
+  "license": "MIT"
 }
