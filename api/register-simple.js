@@ -1,6 +1,4 @@
-// Registration API with Neon database connectivity
-const { Pool } = require('pg');
-
+// Registration API with simplified database connectivity
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,7 +11,6 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'GET') {
-    let pool;
     try {
       // Check if database is configured
       if (!process.env.POSTGRES_URL) {
@@ -32,8 +29,30 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Connect to Neon database
-      pool = new Pool({
+      // Try to load pg module dynamically
+      let Pool;
+      try {
+        const pg = require('pg');
+        Pool = pg.Pool;
+      } catch (error) {
+        console.log('pg module not available, using fallback');
+        return res.status(200).json({
+          status: 'fallback_no_pg',
+          message: 'PostgreSQL module not available - using fallback data',
+          total_registrations: 3,
+          early_bird_count: 2,
+          recent_24h_count: 1,
+          database_connected: false,
+          reason: 'pg module not found: ' + error.message,
+          environment: {
+            node_version: process.version,
+            postgres_url_configured: true
+          }
+        });
+      }
+
+      // Connect to database
+      const pool = new Pool({
         connectionString: process.env.POSTGRES_URL,
         ssl: { rejectUnauthorized: false }
       });
@@ -46,6 +65,8 @@ module.exports = async (req, res) => {
       const totalRegistrations = parseInt(totalResult.rows[0].total);
       const earlyBirdCount = parseInt(earlyBirdResult.rows[0].count);
       const recent24hCount = parseInt(recent24hResult.rows[0].count);
+
+      await pool.end();
 
       return res.status(200).json({
         status: 'ready_live',
@@ -65,7 +86,7 @@ module.exports = async (req, res) => {
       console.error('Database error:', error);
       
       return res.status(200).json({
-        status: 'fallback',
+        status: 'fallback_error',
         message: 'Database error - using fallback data',
         total_registrations: 5,
         early_bird_count: 3,
@@ -77,15 +98,10 @@ module.exports = async (req, res) => {
           postgres_url_configured: !!process.env.POSTGRES_URL
         }
       });
-    } finally {
-      if (pool) {
-        await pool.end();
-      }
     }
   }
 
   if (req.method === 'POST') {
-    let pool;
     try {
       const {
         firstName, lastName, email, phone, clubName, position, gender, address,
@@ -111,8 +127,21 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Connect to Neon database
-      pool = new Pool({
+      // Try to load pg module dynamically
+      let Pool;
+      try {
+        const pg = require('pg');
+        Pool = pg.Pool;
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: 'Database module not available - cannot save registration',
+          error: 'pg_module_missing'
+        });
+      }
+
+      // Connect to database
+      const pool = new Pool({
         connectionString: process.env.POSTGRES_URL,
         ssl: { rejectUnauthorized: false }
       });
@@ -148,6 +177,8 @@ module.exports = async (req, res) => {
       const result = await pool.query(insertQuery, values);
       const savedRegistration = result.rows[0];
 
+      await pool.end();
+
       return res.status(201).json({
         success: true,
         message: 'Registration saved successfully to Neon database!',
@@ -180,10 +211,6 @@ module.exports = async (req, res) => {
         message: 'Registration failed due to server error',
         error: error.message
       });
-    } finally {
-      if (pool) {
-        await pool.end();
-      }
     }
   }
 
