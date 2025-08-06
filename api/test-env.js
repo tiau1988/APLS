@@ -19,13 +19,13 @@ module.exports = async (req, res) => {
       all_env_keys: Object.keys(process.env).filter(key => key.includes('POSTGRES') || key.includes('DATABASE'))
     };
 
-    // Try to import @vercel/postgres
+    // Try to import pg
     let importError = null;
-    let sqlFunction = null;
+    let poolFunction = null;
     
     try {
-      const { sql } = require('@vercel/postgres');
-      sqlFunction = typeof sql;
+      const { Pool } = require('pg');
+      poolFunction = typeof Pool;
     } catch (error) {
       importError = error.message;
     }
@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
       postgres_module: {
         import_success: !importError,
         import_error: importError,
-        sql_function_type: sqlFunction
+        pool_function_type: poolFunction
       },
       timestamp: new Date().toISOString()
     });
