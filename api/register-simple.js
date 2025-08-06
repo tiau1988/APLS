@@ -15,8 +15,29 @@ module.exports = async (req, res) => {
   // Handle GET requests for testing
   if (req.method === 'GET') {
     try {
+      // Check if environment variables are available
+      if (!process.env.POSTGRES_URL) {
+        return res.status(200).json({
+          message: "Registration API is operational (Database not configured)",
+          status: "ready_no_db",
+          database: {
+            connected: false,
+            reason: "POSTGRES_URL environment variable not set"
+          },
+          environment: {
+            node_version: process.version,
+            postgres_url_configured: false,
+            timestamp: new Date().toISOString()
+          },
+          totalRegistrations: 0,
+          earlyBirdCount: 0,
+          recent24h: 0
+        });
+      }
+
       // Test database connection
       const result = await sql`SELECT COUNT(*) as count FROM registrations`;
+      const earlyBirdResult = await sql`SELECT COUNT(*) as count FROM registrations WHERE registration_type = 'early-bird'`;
       
       return res.status(200).json({
         message: "Registration API with Neon Database is operational",
@@ -27,20 +48,26 @@ module.exports = async (req, res) => {
         },
         environment: {
           node_version: process.version,
-          postgres_url_configured: !!process.env.POSTGRES_URL,
+          postgres_url_configured: true,
           timestamp: new Date().toISOString()
-        }
+        },
+        totalRegistrations: parseInt(result.rows[0].count),
+        earlyBirdCount: parseInt(earlyBirdResult.rows[0].count),
+        recent24h: 0
       });
     } catch (error) {
-      return res.status(500).json({
-        message: "Database connection failed",
-        status: "error",
+      return res.status(200).json({
+        message: "Database connection failed, using fallback mode",
+        status: "fallback",
         error: error.message,
         environment: {
           node_version: process.version,
           postgres_url_configured: !!process.env.POSTGRES_URL,
           timestamp: new Date().toISOString()
-        }
+        },
+        totalRegistrations: 0,
+        earlyBirdCount: 0,
+        recent24h: 0
       });
     }
   }
