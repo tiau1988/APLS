@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Get registration statistics from shared storage
-      const stats = await getRegistrationStats();
+      const stats = getRegistrationStats();
 
       return res.status(200).json({
         status: 'ready_production',
@@ -78,16 +78,11 @@ export default async function handler(req, res) {
       }
 
       // Check if email already exists
-      const existingRegistration = await findRegistrationByEmail(email);
+      const existingRegistration = findRegistrationByEmail(email);
       if (existingRegistration) {
-        return res.status(409).json({
-          success: false,
-          message: 'Email already registered. Please use a different email address.',
-          existing_registration: {
-            registrationId: existingRegistration.registrationId,
-            fullName: `${existingRegistration.firstName} ${existingRegistration.lastName}`,
-            registrationDate: existingRegistration.registrationDate
-          }
+        return res.status(400).json({ 
+          error: 'Email already registered',
+          message: 'This email address has already been used for registration.'
         });
       }
 
@@ -132,7 +127,7 @@ export default async function handler(req, res) {
       };
 
       // Save to shared storage
-      const savedRegistration = await addRegistration(newRegistration);
+      const savedRegistration = addRegistration(newRegistration);
 
       return res.status(201).json({
         success: true,
