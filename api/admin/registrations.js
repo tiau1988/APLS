@@ -20,25 +20,25 @@ export default async function handler(req, res) {
 
   try {
     // Get all registrations from shared storage
-    const registrations = getAllRegistrations();
+    const registrations = await getAllRegistrations();
     
     // Format registrations for admin display
     const formattedRegistrations = registrations.map(reg => ({
-      registration_id: reg.registrationId,
-      full_name: `${reg.firstName} ${reg.lastName}`,
+      registration_id: reg.registration_id || reg.registrationId,
+      full_name: `${reg.first_name || reg.firstName} ${reg.last_name || reg.lastName}`,
       email: reg.email,
       phone: reg.phone || '-',
-      club_name: reg.clubName || '-',
+      club_name: reg.club_name || reg.clubName || '-',
       district: reg.district || '-',
       position: reg.position || '-',
-      registration_type: reg.registrationType,
-      total_amount: reg.totalAmount,
+      registration_type: reg.registration_type || reg.registrationType,
+      total_amount: reg.total_amount || reg.totalAmount,
       status: reg.status,
-      created_at: reg.registrationDate
+      created_at: reg.registration_date || reg.registrationDate
     }));
 
     // Get statistics from shared storage
-    const statistics = getRegistrationStats();
+    const statistics = await getRegistrationStats();
 
     res.status(200).json({
       success: true,
