@@ -374,34 +374,161 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
             
             try {
+                // Check if file is selected
+                const fileInput = document.getElementById('payment-slip');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showFormMessage('请上传您的支付凭条。', 'error');
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                    return;
+                }
+                
+                // Show upload status
+                const uploadStatus = document.getElementById('upload-status');
+                if (uploadStatus) {
+                    uploadStatus.textContent = '正在上传文件...';
+                    uploadStatus.className = 'info';
+                }
+                
+                // Convert file to base64 using the global function from file-upload.js
+                const base64Data = await window.fileToBase64(file);
+                
+                // Upload file to server
+                let fileUrl = '';
+                try {
+                    console.log('开始上传文件...');
+                    const uploadResponse = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            fileData: base64Data,
+                            fileName: file.name,
+                            fileType: file.type
+                        })
+                    });
+                    
+                    console.log('文件上传响应状态:', uploadResponse.status);
+                    const uploadResult = await uploadResponse.json();
+                    console.log('文件上传响应:', uploadResult);
+                    
+                    if (uploadResponse.ok) {
+                        fileUrl = uploadResult.file.url;
+                        
+                        if (uploadStatus) {
+                            uploadStatus.textContent = '文件上传成功!';
+                            uploadStatus.className = 'success';
+                        }
+                    } else {
+                        if (uploadStatus) {
+                            uploadStatus.textContent = '文件上传失败。继续注册...';
+                            uploadStatus.className = 'warning';
+                        }
+                    }
+                } catch (uploadError) {
+                    console.error('文件上传错误:', uploadError);
+                    if (uploadStatus) {
+                        uploadStatus.textContent = '文件上传失败。继续注册...';
+                        uploadStatus.className = 'warning';
+                    }
+                }
+                
                 // Collect form data
                 const formData = new FormData(registrationForm);
                 const registrationData = Object.fromEntries(formData.entries());
+                
+                // Add file URL if available
+                if (fileUrl) {
+                    registrationData.paymentSlipUrl = fileUrl;
+                }
                 
                 // Add timestamp
                 registrationData.registrationDate = new Date().toISOString();
                 registrationData.registrationId = generateRegistrationId();
                 
-                // Submit to database (API call)
-                const response = await submitRegistration(registrationData);
-                
-                if (response.success) {
-                    showFormMessage(`Registration successful! Your registration ID is: ${registrationData.registrationId}. A confirmation email will be sent shortly.`, 'success');
-                    registrationForm.reset();
-                    updateTotalAmount(); // Reset the total calculation
-                } else {
-                    throw new Error(response.message || 'Registration failed');
+                // Submit registration data
+                try {
+                    console.log('开始提交注册数据...');
+                    console.log('注册数据:', registrationData);
+                    
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(registrationData)
+                    });
+
+                    console.log('注册响应状态:', response.status);
+                    const result = await response.json();
+                    console.log('注册响应:', result);
+
+                    if (response.ok) {
+                        showFormMessage('注册成功！我们将很快与您联系。', 'success');
+                        registrationForm.reset();
+                        updateTotalAmount(); // Reset the total calculation
+                        
+                        // Reset file preview using the global function from file-upload.js
+                        if (window.resetFilePreview) {
+                            window.resetFilePreview();
+                        } else {
+                            // Fallback if the global function is not available
+                            const previewContainer = document.getElementById('file-preview-container');
+                            if (previewContainer) {
+                                previewContainer.innerHTML = '';
+                                previewContainer.style.display = 'none';
+                            }
+                        }
+                        
+                        if (uploadStatus) {
+                            uploadStatus.textContent = '';
+                            uploadStatus.className = '';
+                        }
+                    } else {
+                        throw new Error(result.message || '注册失败。请重试。');
+                    }
+                } catch (submitError) {
+                    console.error('注册错误:', submitError);
+                    // Try the submitRegistration function as fallback
+                    const response = await submitRegistration(registrationData);
+                    
+                    if (response.success) {
+                        showFormMessage(`Registration successful! Your registration ID is: ${registrationData.registrationId}. A confirmation email will be sent shortly.`, 'success');
+                        registrationForm.reset();
+                        updateTotalAmount(); // Reset the total calculation
+                        
+                        // Reset file preview
+                        const filePreviewContainer = document.getElementById('file-preview-container');
+                        if (filePreviewContainer) {
+                            filePreviewContainer.style.display = 'none';
+                        }
+                    } else {
+                        throw new Error(response.message || 'Registration failed');
+                    }
                 }
                 
             } catch (error) {
                 console.error('Registration error:', error);
-                showFormMessage('Registration failed. Please try again or contact support.', 'error');
+                showFormMessage('发生错误。请稍后再试。', 'error');
             } finally {
                 // Restore button state
                 submitButton.textContent = originalText;
                 submitButton.disabled = false;
             }
         });
+        
+        // Helper function to convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
     }
 });
 
