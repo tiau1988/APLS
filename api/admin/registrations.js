@@ -19,10 +19,36 @@ export default function handler(req, res) {
       const registrations = getAllRegistrations();
       const stats = getRegistrationStats();
       
+      // Format registrations for admin display
+      const formattedRegistrations = registrations.map(reg => ({
+        registration_id: reg.registration_id,
+        full_name: `${reg.first_name} ${reg.last_name}`,
+        email: reg.email,
+        phone: reg.phone || '-',
+        club_name: reg.club_name || '-',
+        district: reg.district || '-',
+        position: reg.position || '-',
+        registration_type: reg.registration_type,
+        total_amount: reg.total_amount,
+        status: reg.status,
+        created_at: reg.registration_date
+      }));
+      
+      // Format stats for admin display
+      const formattedStats = {
+        total_registrations: stats.total,
+        early_bird_count: stats.earlyBird,
+        standard_count: stats.regular,
+        recent_24h_count: stats.last24Hours,
+        total_revenue: stats.totalRevenue,
+        confirmed_count: stats.confirmed,
+        pending_count: stats.pending
+      };
+      
       res.status(200).json({
         success: true,
-        registrations: registrations,
-        stats: stats
+        registrations: formattedRegistrations,
+        statistics: formattedStats
       });
     } catch (error) {
       console.error('Error fetching registrations:', error);
