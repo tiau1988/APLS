@@ -191,11 +191,12 @@
                             <th>Status</th>
                             <th>Amount (RM)</th>
                             <th>Date</th>
+                            <th>Payment Slip</th>
                         </tr>
                     </thead>
                     <tbody id="registrationsBody">
                         <tr>
-                            <td colspan="10" class="loading">Loading registrations...</td>
+                            <td colspan="11" class="loading">Loading registrations...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -235,7 +236,7 @@
             const tbody = document.getElementById('registrationsBody');
             
             if (registrations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="loading">No registrations found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="loading">No registrations found.</td></tr>';
                 return;
             }
 
@@ -251,13 +252,14 @@
                     <td>${reg.registration_type}</td>
                     <td>RM ${reg.total_amount}</td>
                     <td>${new Date(reg.created_at).toLocaleDateString()}</td>
+                    <td>${reg.payment_slip_url ? `<a href="${reg.payment_slip_url}" target="_blank">View</a>` : '-'}</td>
                 </tr>
             `).join('');
         }
 
         function showError(message) {
             const tbody = document.getElementById('registrationsBody');
-            tbody.innerHTML = `<tr><td colspan="10" class="error">${message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" class="error">${message}</td></tr>`;
         }
 
         function exportToCSV() {
@@ -266,7 +268,7 @@
                 return;
             }
 
-            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date'];
+            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date', 'Payment Slip URL'];
             const csvContent = [
                 headers.join(','),
                 ...registrationsData.map(reg => [
@@ -279,7 +281,8 @@
                     `"${reg.position || ''}"`,
                     reg.registration_type,
                     reg.total_amount,
-                    new Date(reg.created_at).toLocaleDateString()
+                    new Date(reg.created_at).toLocaleDateString(),
+                    reg.payment_slip_url || ''
                 ].join(','))
             ].join('\n');
 

@@ -605,12 +605,21 @@
                                 </div>
                             </div>
                             <div class="form-group full-width">
-                                <label for="paymentSlip">Payment Slip Upload *</label>
+                                <label for="payment-slip">Payment Slip Upload *</label>
                                 <div class="file-upload-container">
-                                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/*,.pdf" required>
+                                    <input type="file" id="payment-slip" name="paymentSlip" accept="image/*,.pdf" required>
                                     <div class="file-upload-info">
                                         <p>Please upload your payment slip (JPG, PNG, or PDF format, max 5MB)</p>
                                     </div>
+                                    <div id="file-preview-container" style="display: none; margin-top: 10px;">
+                                        <p>Selected file: <span id="file-name"></span></p>
+                                        <img id="file-preview" style="max-width: 200px; max-height: 200px; display: none;" />
+                                        <div id="pdf-icon" style="display: none;">
+                                            <i class="fas fa-file-pdf" style="font-size: 48px; color: #dc3545;"></i>
+                                            <p>PDF Document</p>
+                                        </div>
+                                    </div>
+                                    <div id="upload-status" class=""></div>
                                 </div>
                             </div>
                         </div>
@@ -867,5 +876,6 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="js/file-upload.js"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 // Admin API endpoint for viewing all registrations
-// Updated to work with shared storage system
+// Updated to work with Supabase database
 
 import { getAllRegistrations, getRegistrationStats } from '../shared-storage.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -16,8 +16,8 @@ export default function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const registrations = getAllRegistrations();
-      const stats = getRegistrationStats();
+      const registrations = await getAllRegistrations();
+      const stats = await getRegistrationStats();
       
       // Format registrations for admin display
       const formattedRegistrations = registrations.map(reg => ({
@@ -31,7 +31,8 @@ export default function handler(req, res) {
         registration_type: reg.registration_type,
         total_amount: reg.total_amount,
         status: reg.status,
-        created_at: reg.registration_date
+        created_at: reg.registration_date || reg.created_at,
+        payment_slip_url: reg.payment_slip_url || null
       }));
       
       // Format stats for admin display

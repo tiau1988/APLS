@@ -1,6 +1,6 @@
 // Production Registration API using shared storage
 // This is the main registration endpoint for your website
-// Updated to use shared storage so registrations appear in admin panel
+// Updated to use Supabase for persistent storage
 
 import { getAllRegistrations, addRegistration, findRegistrationByEmail, getRegistrationStats } from './shared-storage.js';
 
@@ -17,24 +17,24 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Get registration statistics from shared storage
-      const stats = getRegistrationStats();
+      const stats = await getRegistrationStats();
 
       return res.status(200).json({
         status: 'ready_production',
-        message: 'Registration system ready - using shared storage!',
-        total_registrations: stats.total_registrations,
-        early_bird_count: stats.early_bird_count,
-        recent_24h_count: stats.recent_24h_count,
+        message: 'Registration system ready - using Supabase storage!',
+        total_registrations: stats.total,
+        early_bird_count: stats.earlyBird,
+        recent_24h_count: stats.last24Hours,
         database_connected: true,
         database_info: {
-          provider: 'Shared Storage',
-          client: 'In-Memory',
-          connection_method: 'Direct Access',
+          provider: 'Supabase',
+          client: 'PostgreSQL',
+          connection_method: 'API',
           status: 'Fully operational'
         },
         environment: {
           node_version: process.version,
-          storage_method: 'shared_memory',
+          storage_method: 'supabase_postgres',
           note: 'Your registrations will appear in admin panel!'
         }
       });
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         district, otherDistrict, ppoasPosition, districtCabinetPosition, clubPosition,
         positionInNgo, otherNgos, registrationType, registrationFee, optionalFee,
         vegetarian, poolsideParty, communityService, installationBanquet,
-        termsConditions, marketingEmails, privacyPolicy
+        termsConditions, marketingEmails, privacyPolicy, paymentSlipUrl
       } = req.body;
 
       // Validate required fields
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       }
 
       // Check if email already exists
-      const existingRegistration = findRegistrationByEmail(email);
+      const existingRegistration = await findRegistrationByEmail(email);
       if (existingRegistration) {
         return res.status(400).json({ 
           error: 'Email already registered',
@@ -123,33 +123,34 @@ export default async function handler(req, res) {
         terms_conditions: termsConditions,
         marketing_emails: marketingEmails,
         privacy_policy: privacyPolicy,
+        payment_slip_url: paymentSlipUrl, // Store the uploaded file URL
         status: 'confirmed',
         registration_date: new Date().toISOString()
       };
 
       // Save to shared storage
-      const savedRegistration = addRegistration(newRegistration);
+      const savedRegistration = await addRegistration(newRegistration);
 
       return res.status(201).json({
         success: true,
         message: 'Registration completed successfully!',
         registration: {
           id: savedRegistration.id,
-          registrationId: savedRegistration.registration_id,
-          fullName: `${firstName} ${lastName}`,
+          registration_id: savedRegistration.registration_id,
+          full_name: `${firstName} ${lastName}`,
           email,
-          registrationType,
-          totalAmount,
-          registrationDate: savedRegistration.registration_date,
+          registration_type: registrationType,
+          total_amount: totalAmount,
+          registration_date: savedRegistration.registration_date,
           status: savedRegistration.status
         },
         database_info: {
-          provider: 'Shared Storage',
-          client: 'In-Memory',
+          provider: 'Supabase',
+          client: 'PostgreSQL',
           status: 'Production Ready'
         },
         next_steps: [
-          'Registration confirmed and saved to shared storage',
+          'Registration confirmed and saved to database',
           'Your registration will appear in the admin panel',
           'Please keep your registration ID for future reference'
         ]
