@@ -94,36 +94,37 @@ export default async function handler(req, res) {
       const optFee = parseFloat(optionalFee) || 0;
       const totalAmount = regFee + optFee;
 
-      // Create new registration object
+      // Create new registration object with correct field names
       const newRegistration = {
-        registrationId,
-        firstName,
-        lastName,
+        registration_id: registrationId,
+        first_name: firstName,
+        last_name: lastName,
         email,
         phone,
-        clubName,
+        club_name: clubName,
         position,
         gender,
         address,
         district,
-        otherDistrict,
-        ppoasPosition,
-        districtCabinetPosition,
-        clubPosition,
-        positionInNgo,
-        otherNgos,
-        registrationType,
-        registrationFee: regFee,
-        optionalFee: optFee,
-        totalAmount,
+        other_district: otherDistrict,
+        ppoas_position: ppoasPosition,
+        district_cabinet_position: districtCabinetPosition,
+        club_position: clubPosition,
+        position_in_ngo: positionInNgo,
+        other_ngos: otherNgos,
+        registration_type: registrationType,
+        registration_fee: regFee,
+        optional_fee: optFee,
+        total_amount: totalAmount,
         vegetarian,
-        poolsideParty,
-        communityService,
-        installationBanquet,
-        termsConditions,
-        marketingEmails,
-        privacyPolicy,
-        status: 'confirmed'
+        poolside_party: poolsideParty,
+        community_service: communityService,
+        installation_banquet: installationBanquet,
+        terms_conditions: termsConditions,
+        marketing_emails: marketingEmails,
+        privacy_policy: privacyPolicy,
+        status: 'confirmed',
+        registration_date: new Date().toISOString()
       };
 
       // Save to shared storage
@@ -134,12 +135,12 @@ export default async function handler(req, res) {
         message: 'Registration completed successfully!',
         registration: {
           id: savedRegistration.id,
-          registrationId: savedRegistration.registrationId,
+          registrationId: savedRegistration.registration_id,
           fullName: `${firstName} ${lastName}`,
           email,
           registrationType,
           totalAmount,
-          registrationDate: savedRegistration.registrationDate,
+          registrationDate: savedRegistration.registration_date,
           status: savedRegistration.status
         },
         database_info: {
