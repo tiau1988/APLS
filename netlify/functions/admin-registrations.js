@@ -1,43 +1,28 @@
 // Admin API endpoint to view all registrations
 // This endpoint provides access to all registration data for admin panel
-// Uses simple in-memory storage for demonstration
+// Uses Supabase database for permanent storage
 
-// Simple in-memory storage (shared with register.js)
-let registrations = [
-  {
-    id: 1,
-    registration_id: 'APLLS-DEMO-001',
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+60123456789',
-    club_name: 'Lions Club KL',
-    position: 'President',
-    district: 'District 308B1',
-    registration_type: 'early-bird',
-    total_amount: 260,
-    registration_date: new Date('2024-01-15T10:30:00Z').toISOString(),
-    status: 'confirmed'
-  },
-  {
-    id: 2,
-    registration_id: 'APLLS-DEMO-002',
-    first_name: 'Jane',
-    last_name: 'Smith',
-    email: 'jane.smith@example.com',
-    phone: '+60123456790',
-    club_name: 'Lions Club PJ',
-    position: 'Secretary',
-    district: 'District 308B2',
-    registration_type: 'standard',
-    total_amount: 390,
-    registration_date: new Date('2024-01-16T14:20:00Z').toISOString(),
-    status: 'pending'
-  }
-];
+const { createClient } = require('@supabase/supabase-js');
 
-function getAllRegistrations() {
-  return registrations;
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || 'https://eragmmdwgtbylrmjzqwf.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseKey) {
+  throw new Error('SUPABASE_KEY or SUPABASE_ANON_KEY environment variable is required');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper function to get all registrations from Supabase
+async function getAllRegistrations() {
+  const { data, error } = await supabase
+    .from('registrations')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
 }
 
 exports.handler = async (event, context) => {
@@ -59,8 +44,8 @@ exports.handler = async (event, context) => {
 
   if (req.method === 'GET') {
     try {
-      // Get all registrations from in-memory storage
-      const allRegistrations = getAllRegistrations();
+      // Get all registrations from Supabase
+      const allRegistrations = await getAllRegistrations();
       
       // Calculate statistics
       const total = allRegistrations.length;
@@ -68,8 +53,8 @@ exports.handler = async (event, context) => {
       const standard = allRegistrations.filter(r => r.registration_type === 'standard').length;
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const last24Hours = allRegistrations.filter(r => new Date(r.registration_date) > yesterday).length;
-      const totalRevenue = allRegistrations.reduce((sum, r) => sum + r.total_amount, 0);
+      const last24Hours = allRegistrations.filter(r => new Date(r.created_at) > yesterday).length;
+      const totalRevenue = allRegistrations.reduce((sum, r) => sum + (r.total_amount || 0), 0);
       const confirmed = allRegistrations.filter(r => r.status === 'confirmed').length;
       const pending = allRegistrations.filter(r => r.status === 'pending').length;
       
@@ -85,8 +70,7 @@ exports.handler = async (event, context) => {
         registration_type: reg.registration_type,
         total_amount: reg.total_amount,
         status: reg.status,
-        created_at: reg.registration_date,
-        payment_slip_url: reg.payment_slip_url || null
+        created_at: reg.created_at
       }));
       
       // Format stats for admin display
@@ -111,10 +95,10 @@ exports.handler = async (event, context) => {
           registrations: formattedRegistrations,
           statistics: formattedStats,
           database_info: {
-            provider: 'In-Memory',
-            client: 'JavaScript Array',
-            connection_method: 'Direct Access',
-            status: 'Demo Mode - Connect external DB for production'
+            provider: 'Supabase',
+            client: '@supabase/supabase-js',
+            connection_method: 'REST API',
+            status: 'Production Ready - Permanent Storage'
           }
         })
       };

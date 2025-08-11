@@ -13,7 +13,7 @@
 
 [[redirects]]
   from = "/api/admin/registrations"
-  to = "/.netlify/functions/admin/registrations"
+  to = "/.netlify/functions/admin-registrations"
   status = 200
 
 # Handle 404 errors with custom page

@@ -1,72 +1,64 @@
 // Registration API for Netlify Functions
-// Uses simple in-memory storage for demonstration
-// In production, connect to external database service
+// Uses Supabase database for permanent storage
 
-const { v4: uuidv4 } = require('uuid');
+const { createClient } = require('@supabase/supabase-js');
 
-// Simple in-memory storage (resets on each deployment)
-let registrations = [
-  {
-    id: 1,
-    registration_id: 'APLLS-DEMO-001',
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+60123456789',
-    club_name: 'Lions Club KL',
-    position: 'President',
-    district: 'District 308B1',
-    registration_type: 'early-bird',
-    total_amount: 260,
-    registration_date: new Date('2024-01-15T10:30:00Z').toISOString(),
-    status: 'confirmed'
-  },
-  {
-    id: 2,
-    registration_id: 'APLLS-DEMO-002',
-    first_name: 'Jane',
-    last_name: 'Smith',
-    email: 'jane.smith@example.com',
-    phone: '+60123456790',
-    club_name: 'Lions Club PJ',
-    position: 'Secretary',
-    district: 'District 308B2',
-    registration_type: 'standard',
-    total_amount: 390,
-    registration_date: new Date('2024-01-16T14:20:00Z').toISOString(),
-    status: 'pending'
-  }
-];
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || 'https://eragmmdwgtbylrmjzqwf.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 
-// Helper functions
-function getAllRegistrations() {
-  return registrations;
+if (!supabaseKey) {
+  throw new Error('SUPABASE_KEY or SUPABASE_ANON_KEY environment variable is required');
 }
 
-function addRegistration(registration) {
-  const newId = registrations.length > 0 
-    ? Math.max(...registrations.map(r => r.id)) + 1 
-    : 1;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper functions using Supabase
+async function getAllRegistrations() {
+  const { data, error } = await supabase
+    .from('registrations')
+    .select('*')
+    .order('created_at', { ascending: false });
   
-  const newRegistration = {
-    ...registration,
-    id: newId
-  };
+  if (error) throw error;
+  return data || [];
+}
+
+async function addRegistration(registration) {
+  const { data, error } = await supabase
+    .from('registrations')
+    .insert([registration])
+    .select()
+    .single();
   
-  registrations.push(newRegistration);
-  return newRegistration;
+  if (error) throw error;
+  return data;
 }
 
-function findRegistrationByEmail(email) {
-  return registrations.find(reg => reg.email.toLowerCase() === email.toLowerCase());
+async function findRegistrationByEmail(email) {
+  const { data, error } = await supabase
+    .from('registrations')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .single();
+  
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+  return data;
 }
 
-function getRegistrationStats() {
-  const total = registrations.length;
-  const earlyBird = registrations.filter(r => r.registration_type === 'early-bird').length;
+async function getRegistrationStats() {
+  const { data: allRegistrations, error: allError } = await supabase
+    .from('registrations')
+    .select('registration_type, created_at');
+  
+  if (allError) throw allError;
+  
+  const total = allRegistrations?.length || 0;
+  const earlyBird = allRegistrations?.filter(r => r.registration_type === 'early-bird').length || 0;
+  
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const last24Hours = registrations.filter(r => new Date(r.registration_date) > yesterday).length;
+  const last24Hours = allRegistrations?.filter(r => new Date(r.created_at) > yesterday).length || 0;
   
   return {
     total,
@@ -106,7 +98,7 @@ exports.handler = async (event, context) => {
   if (req.method === 'GET') {
     try {
       // Get registration statistics
-      const stats = getRegistrationStats();
+      const stats = await getRegistrationStats();
 
       return {
         statusCode: 200,
@@ -115,22 +107,22 @@ exports.handler = async (event, context) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          status: 'ready_netlify',
-          message: 'Registration system ready - using in-memory storage for demo!',
+          status: 'ready_supabase',
+          message: 'Registration system ready - using Supabase database!',
           total_registrations: stats.total,
           early_bird_count: stats.earlyBird,
           recent_24h_count: stats.last24Hours,
           database_connected: true,
           database_info: {
-            provider: 'In-Memory',
-            client: 'JavaScript Array',
-            connection_method: 'Direct Access',
-            status: 'Demo Mode - Connect external DB for production'
+            provider: 'Supabase',
+            client: '@supabase/supabase-js',
+            connection_method: 'REST API',
+            status: 'Production Ready - Permanent Storage'
           },
           environment: {
             node_version: process.version,
-            storage_method: 'in_memory_demo',
-            note: 'Connect to external database service for production use!'
+            storage_method: 'supabase_postgresql',
+            note: 'Using Supabase PostgreSQL for permanent data storage'
           }
         })
       };
@@ -184,7 +176,7 @@ exports.handler = async (event, context) => {
       }
 
       // Check for duplicate email
-      const existingRegistration = findRegistrationByEmail(email);
+      const existingRegistration = await findRegistrationByEmail(email);
       if (existingRegistration) {
         return {
           statusCode: 409,
@@ -214,13 +206,11 @@ exports.handler = async (event, context) => {
         district,
         registration_type: registrationType,
         total_amount: parseFloat(totalAmount) || 0,
-        payment_slip_url: paymentSlip || null,
-        registration_date: new Date().toISOString(),
         status: 'pending'
       };
 
-      // Save to in-memory storage
-      const savedRegistration = addRegistration(registration);
+      // Save to Supabase database
+      const savedRegistration = await addRegistration(registration);
 
       return {
         statusCode: 201,

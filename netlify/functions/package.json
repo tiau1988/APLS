@@ -4,6 +4,7 @@
   "description": "Netlify Functions for APLLS 2026",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.54.0",
     "uuid": "^11.1.0"
   }
 }
