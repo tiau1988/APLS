@@ -216,7 +216,7 @@ exports.handler = async (event, context) => {
       } = req.body;
 
       // Validate required fields (email is now optional)
-      if (!firstName || !lastName || !phone || !residenceCountry || !passportNric || !clubName || !position || !district || !registrationType) {
+      if (!firstName || !lastName || !phone || !residenceCountry || !passportNric || !clubName || !district || !registrationType) {
         return {
           statusCode: 400,
           headers: {
