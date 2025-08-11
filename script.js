@@ -361,6 +361,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showFormMessage('File size must be less than 5MB.', 'error');
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+                if (!allowedTypes.includes(file.type)) {
+                    showFormMessage('Please upload a valid image (JPG, PNG) or PDF file.', 'error');
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                    return;
+                }
+                
                 // Show upload status
                 const uploadStatus = document.getElementById('upload-status');
                 if (uploadStatus) {
@@ -368,12 +385,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     uploadStatus.className = 'info';
                 }
                 
-                // For demo purposes, we'll just note the file name
-                let fileUrl = `demo-payment-slip-${file.name}`;
-                
-                if (uploadStatus) {
-                    uploadStatus.textContent = 'File processed successfully!';
-                    uploadStatus.className = 'success';
+                // Convert file to base64
+                let fileData;
+                try {
+                    fileData = await fileToBase64(file);
+                    if (uploadStatus) {
+                        uploadStatus.textContent = 'File processed successfully!';
+                        uploadStatus.className = 'success';
+                    }
+                } catch (error) {
+                    console.error('File processing error:', error);
+                    showFormMessage('Error processing file. Please try again.', 'error');
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                    return;
                 }
                 
                 // Collect form data and transform to match API expectations
@@ -413,7 +438,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     district: rawData.district === 'other' ? rawData.otherDistrict : rawData.district,
                     registrationType: rawData.registrationType,
                     totalAmount: totalAmount,
-                    paymentSlip: fileUrl
+                    paymentSlip: {
+                        fileName: file.name,
+                        fileType: file.type,
+                        fileSize: file.size,
+                        fileData: fileData
+                    }
                 }
                 
                 // Submit registration data

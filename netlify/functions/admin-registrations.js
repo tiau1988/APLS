@@ -70,6 +70,7 @@ exports.handler = async (event, context) => {
         registration_type: reg.registration_type,
         total_amount: reg.total_amount,
         status: reg.status,
+        payment_slip_url: reg.payment_slip_url,
         created_at: reg.created_at
       }));
       

@@ -46,6 +46,26 @@ async function findRegistrationByEmail(email) {
   return data;
 }
 
+// Process payment slip file and return URL
+async function processPaymentSlip(paymentSlipData, registrationId) {
+  if (!paymentSlipData || !paymentSlipData.fileData) {
+    return null;
+  }
+  
+  try {
+    // For now, we'll store the file as base64 in the database
+    // In a production environment, you might want to upload to Supabase Storage or another service
+    const fileExtension = paymentSlipData.fileName.split('.').pop().toLowerCase();
+    const fileName = `payment-slip-${registrationId}.${fileExtension}`;
+    
+    // Return a data URL that can be used to display/download the file
+    return paymentSlipData.fileData;
+  } catch (error) {
+    console.error('Error processing payment slip:', error);
+    return null;
+  }
+}
+
 async function getRegistrationStats() {
   const { data: allRegistrations, error: allError } = await supabase
     .from('registrations')
@@ -194,6 +214,12 @@ exports.handler = async (event, context) => {
       // Generate registration ID
       const registrationId = `APLLS-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
+      // Process payment slip if provided
+      let paymentSlipUrl = null;
+      if (paymentSlip) {
+        paymentSlipUrl = await processPaymentSlip(paymentSlip, registrationId);
+      }
+
       // Create registration object
       const registration = {
         registration_id: registrationId,
@@ -206,6 +232,7 @@ exports.handler = async (event, context) => {
         district,
         registration_type: registrationType,
         total_amount: parseFloat(totalAmount) || 0,
+        payment_slip_url: paymentSlipUrl,
         status: 'pending'
       };
 
