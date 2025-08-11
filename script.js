@@ -276,28 +276,27 @@ function toggleOtherDistrict() {
 // Live Registration Counter Functions
 async function fetchRegistrationCounts() {
     try {
-        const response = await fetch('/.netlify/functions/admin-registrations');
+        const response = await fetch('/.netlify/functions/registration-stats');
         if (response.ok) {
             const data = await response.json();
             // Transform the API response to match expected format
-            const stats = data.statistics || {};
             const transformedData = {
                 counts: {
-                    total: stats.total_registrations || 0,
-                    earlyBird: stats.early_bird_count || 0,
-                    recent24h: stats.recent_24h_count || 0
+                    total: data.totalCount || 0,
+                    earlyBird: data.earlyBirdCount || 0,
+                    recent24h: data.recentCount || 0
                 },
                 earlyBird: {
-                    available: (stats.early_bird_count || 0) < 150,
-                    remaining: Math.max(0, 150 - (stats.early_bird_count || 0)),
-                    percentage: Math.round(((stats.early_bird_count || 0) / 150) * 100)
+                    available: (data.earlyBirdCount || 0) < (data.earlyBirdLimit || 100),
+                    remaining: data.earlyBirdRemaining || 0,
+                    percentage: Math.round(((data.earlyBirdCount || 0) / (data.earlyBirdLimit || 100)) * 100)
                 }
             };
             updateCounterDisplay(transformedData);
             return transformedData;
         }
     } catch (error) {
-        console.log('API not available, using demo data...');
+        console.log('Registration stats API not available, using demo data...');
         
         // Fallback to demo data
         const fallbackData = {
@@ -308,8 +307,8 @@ async function fetchRegistrationCounts() {
             },
             earlyBird: {
                 available: true,
-                remaining: 135,
-                percentage: 10
+                remaining: 85,
+                percentage: 15
             }
         };
         updateCounterDisplay(fallbackData);
