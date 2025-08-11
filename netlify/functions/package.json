@@ -1,0 +1,9 @@
+{
+  "name": "aplls-2026-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for APLLS 2026",
+  "type": "commonjs",
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}

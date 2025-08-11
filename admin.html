@@ -221,7 +221,50 @@
                 }
             } catch (error) {
                 console.error('Error loading registrations:', error);
-                showError('Error connecting to database. Please check your connection.');
+                showError('Error connecting to API. Using demo data.');
+                
+                // Fallback to demo data
+                const demoData = {
+                    success: true,
+                    registrations: [
+                        {
+                            registration_id: 'APLLS-DEMO-001',
+                            full_name: 'John Doe',
+                            email: 'john.doe@example.com',
+                            phone: '+60123456789',
+                            club_name: 'Lions Club KL',
+                            district: 'District 308B1',
+                            position: 'President',
+                            registration_type: 'early-bird',
+                            total_amount: 260,
+                            created_at: new Date().toISOString(),
+                            payment_slip_url: null
+                        },
+                        {
+                            registration_id: 'APLLS-DEMO-002',
+                            full_name: 'Jane Smith',
+                            email: 'jane.smith@example.com',
+                            phone: '+60123456790',
+                            club_name: 'Lions Club PJ',
+                            district: 'District 308B2',
+                            position: 'Secretary',
+                            registration_type: 'standard',
+                            total_amount: 390,
+                            created_at: new Date().toISOString(),
+                            payment_slip_url: null
+                        }
+                    ],
+                    statistics: {
+                        total_registrations: 2,
+                        total_revenue: 650,
+                        early_bird_count: 1,
+                        standard_count: 1
+                    }
+                };
+                
+                registrationsData = demoData.registrations;
+                updateStats(demoData.statistics);
+                updateTable(demoData.registrations);
             }
         }
 

@@ -40,15 +40,21 @@ function getAllRegistrations() {
   return registrations;
 }
 
-export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+exports.handler = async (event, context) => {
+  const req = {
+    method: event.httpMethod
+  };
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      },
+      body: ''
+    };
   }
 
   if (req.method === 'GET') {
@@ -94,26 +100,47 @@ export default async function handler(req, res) {
         pending_count: pending
       };
       
-      res.status(200).json({
-        success: true,
-        registrations: formattedRegistrations,
-        statistics: formattedStats,
-        database_info: {
-          provider: 'In-Memory',
-          client: 'JavaScript Array',
-          connection_method: 'Direct Access',
-          status: 'Demo Mode - Connect external DB for production'
-        }
-      });
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: true,
+          registrations: formattedRegistrations,
+          statistics: formattedStats,
+          database_info: {
+            provider: 'In-Memory',
+            client: 'JavaScript Array',
+            connection_method: 'Direct Access',
+            status: 'Demo Mode - Connect external DB for production'
+          }
+        })
+      };
     } catch (error) {
       console.error('Error fetching registrations:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Failed to fetch registrations',
-        message: error.message
-      });
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Failed to fetch registrations',
+          message: error.message
+        })
+      };
     }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    return {
+      statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 }

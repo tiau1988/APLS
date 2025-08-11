@@ -1,8 +1,79 @@
-// Production Registration API using shared storage
-// This is the main registration endpoint for your website
-// Updated to use Supabase for persistent storage
+// Registration API for Netlify Functions
+// Uses simple in-memory storage for demonstration
+// In production, connect to external database service
 
-import { getAllRegistrations, addRegistration, findRegistrationByEmail, getRegistrationStats } from './shared-storage.js';
+import { v4 as uuidv4 } from 'uuid';
+
+// Simple in-memory storage (resets on each deployment)
+let registrations = [
+  {
+    id: 1,
+    registration_id: 'APLLS-DEMO-001',
+    first_name: 'John',
+    last_name: 'Doe',
+    email: 'john.doe@example.com',
+    phone: '+60123456789',
+    club_name: 'Lions Club KL',
+    position: 'President',
+    district: 'District 308B1',
+    registration_type: 'early-bird',
+    total_amount: 260,
+    registration_date: new Date('2024-01-15T10:30:00Z').toISOString(),
+    status: 'confirmed'
+  },
+  {
+    id: 2,
+    registration_id: 'APLLS-DEMO-002',
+    first_name: 'Jane',
+    last_name: 'Smith',
+    email: 'jane.smith@example.com',
+    phone: '+60123456790',
+    club_name: 'Lions Club PJ',
+    position: 'Secretary',
+    district: 'District 308B2',
+    registration_type: 'standard',
+    total_amount: 390,
+    registration_date: new Date('2024-01-16T14:20:00Z').toISOString(),
+    status: 'pending'
+  }
+];
+
+// Helper functions
+function getAllRegistrations() {
+  return registrations;
+}
+
+function addRegistration(registration) {
+  const newId = registrations.length > 0 
+    ? Math.max(...registrations.map(r => r.id)) + 1 
+    : 1;
+  
+  const newRegistration = {
+    ...registration,
+    id: newId
+  };
+  
+  registrations.push(newRegistration);
+  return newRegistration;
+}
+
+function findRegistrationByEmail(email) {
+  return registrations.find(reg => reg.email.toLowerCase() === email.toLowerCase());
+}
+
+function getRegistrationStats() {
+  const total = registrations.length;
+  const earlyBird = registrations.filter(r => r.registration_type === 'early-bird').length;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const last24Hours = registrations.filter(r => new Date(r.registration_date) > yesterday).length;
+  
+  return {
+    total,
+    earlyBird,
+    last24Hours
+  };
+}
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -16,32 +87,32 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      // Get registration statistics from shared storage
-      const stats = await getRegistrationStats();
+      // Get registration statistics
+      const stats = getRegistrationStats();
 
       return res.status(200).json({
-        status: 'ready_production',
-        message: 'Registration system ready - using Supabase storage!',
+        status: 'ready_netlify',
+        message: 'Registration system ready - using in-memory storage for demo!',
         total_registrations: stats.total,
         early_bird_count: stats.earlyBird,
         recent_24h_count: stats.last24Hours,
         database_connected: true,
         database_info: {
-          provider: 'Supabase',
-          client: 'PostgreSQL',
-          connection_method: 'API',
-          status: 'Fully operational'
+          provider: 'In-Memory',
+          client: 'JavaScript Array',
+          connection_method: 'Direct Access',
+          status: 'Demo Mode - Connect external DB for production'
         },
         environment: {
           node_version: process.version,
-          storage_method: 'supabase_postgres',
-          note: 'Your registrations will appear in admin panel!'
+          storage_method: 'in_memory_demo',
+          note: 'Connect to external database service for production use!'
         }
       });
 
     } catch (error) {
       return res.status(500).json({
-        status: 'database_error',
+        status: 'error',
         message: 'Failed to get statistics',
         error: error.message,
         total_registrations: 0,
@@ -53,116 +124,80 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const {
-        firstName, lastName, email, phone, clubName, position, gender, address,
-        district, otherDistrict, ppoasPosition, districtCabinetPosition, clubPosition,
-        positionInNgo, otherNgos, registrationType, registrationFee, optionalFee,
-        vegetarian, poolsideParty, communityService, installationBanquet,
-        termsConditions, marketingEmails, privacyPolicy, paymentSlipUrl
+        firstName,
+        lastName,
+        email,
+        phone,
+        clubName,
+        position,
+        district,
+        registrationType,
+        totalAmount,
+        paymentSlip
       } = req.body;
 
       // Validate required fields
-      if (!firstName || !lastName || !email) {
+      if (!firstName || !lastName || !email || !phone || !clubName || !position || !district || !registrationType) {
         return res.status(400).json({
           success: false,
-          message: 'Missing required fields: firstName, lastName, email'
+          message: 'All required fields must be provided'
         });
       }
 
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid email format'
-        });
-      }
-
-      // Check if email already exists
-      const existingRegistration = await findRegistrationByEmail(email);
+      // Check for duplicate email
+      const existingRegistration = findRegistrationByEmail(email);
       if (existingRegistration) {
-        return res.status(400).json({ 
-          error: 'Email already registered',
-          message: 'This email address has already been used for registration.'
+        return res.status(409).json({
+          success: false,
+          message: 'Email already registered. Please use a different email address.'
         });
       }
 
       // Generate registration ID
-      const registrationId = `APLLS-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      const registrationId = `APLLS-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
-      // Calculate total amount
-      const regFee = parseFloat(registrationFee) || 0;
-      const optFee = parseFloat(optionalFee) || 0;
-      const totalAmount = regFee + optFee;
-
-      // Create new registration object with correct field names
-      const newRegistration = {
+      // Create registration object
+      const registration = {
         registration_id: registrationId,
         first_name: firstName,
         last_name: lastName,
-        email,
+        email: email.toLowerCase(),
         phone,
         club_name: clubName,
         position,
-        gender,
-        address,
         district,
-        other_district: otherDistrict,
-        ppoas_position: ppoasPosition,
-        district_cabinet_position: districtCabinetPosition,
-        club_position: clubPosition,
-        position_in_ngo: positionInNgo,
-        other_ngos: otherNgos,
         registration_type: registrationType,
-        registration_fee: regFee,
-        optional_fee: optFee,
-        total_amount: totalAmount,
-        vegetarian,
-        poolside_party: poolsideParty,
-        community_service: communityService,
-        installation_banquet: installationBanquet,
-        terms_conditions: termsConditions,
-        marketing_emails: marketingEmails,
-        privacy_policy: privacyPolicy,
-        payment_slip_url: paymentSlipUrl, // Store the uploaded file URL
-        status: 'confirmed',
-        registration_date: new Date().toISOString()
+        total_amount: parseFloat(totalAmount) || 0,
+        payment_slip_url: paymentSlip || null,
+        registration_date: new Date().toISOString(),
+        status: 'pending'
       };
 
-      // Save to shared storage
-      const savedRegistration = await addRegistration(newRegistration);
+      // Save to in-memory storage
+      const savedRegistration = addRegistration(registration);
 
       return res.status(201).json({
         success: true,
-        message: 'Registration completed successfully!',
-        registration: {
+        message: 'Registration submitted successfully!',
+        registration_id: registrationId,
+        data: {
           id: savedRegistration.id,
-          registration_id: savedRegistration.registration_id,
-          full_name: `${firstName} ${lastName}`,
-          email,
+          registration_id: registrationId,
+          name: `${firstName} ${lastName}`,
+          email: email.toLowerCase(),
+          club_name: clubName,
           registration_type: registrationType,
-          total_amount: totalAmount,
-          registration_date: savedRegistration.registration_date,
-          status: savedRegistration.status
-        },
-        database_info: {
-          provider: 'Supabase',
-          client: 'PostgreSQL',
-          status: 'Production Ready'
-        },
-        next_steps: [
-          'Registration confirmed and saved to database',
-          'Your registration will appear in the admin panel',
-          'Please keep your registration ID for future reference'
-        ]
+          total_amount: parseFloat(totalAmount) || 0,
+          status: 'pending'
+        }
       });
 
     } catch (error) {
       console.error('Registration error:', error);
       return res.status(500).json({
         success: false,
-        message: 'Registration failed. Please try again.',
-        error: error.message,
-        support: 'If the problem persists, please contact support'
+        message: 'Failed to process registration. Please try again.',
+        error: error.message
       });
     }
   }

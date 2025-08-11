@@ -2,28 +2,25 @@
   "name": "aplls-2026",
   "version": "1.0.0",
   "description": "Asia Pacific Lions Leaders Summit 2026 - Official Event Registration Website",
-  "main": "index.js",
-  "type": "commonjs",
+  "main": "index.html",
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.53.0",
-    "pg": "^8.11.3",
-    "postgres": "^3.4.3",
     "uuid": "^11.1.0"
   },
   "scripts": {
     "build": "echo 'Build completed successfully'",
-    "start": "echo 'This is a serverless application'",
-    "dev": "echo 'Development mode'",
-    "vercel-build": "echo 'Vercel build completed'"
+    "start": "echo 'Static website - no server required'",
+    "dev": "echo 'Development mode'"
   },
   "keywords": [
-    "vercel",
+    "netlify",
     "serverless",
-    "postgres",
-    "registration"
+    "lions-club",
+    "registration",
+    "aplls-2026"
   ],
   "author": "APLLS 2026",
   "license": "MIT"

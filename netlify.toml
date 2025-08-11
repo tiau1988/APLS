@@ -1,0 +1,23 @@
+[build]
+  publish = "."
+  command = "echo 'Static site build complete'"
+
+[functions]
+  directory = "netlify/functions"
+
+# API redirects for Netlify Functions
+[[redirects]]
+  from = "/api/register"
+  to = "/.netlify/functions/register"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/registrations"
+  to = "/.netlify/functions/admin/registrations"
+  status = 200
+
+# Handle 404 errors with custom page
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
