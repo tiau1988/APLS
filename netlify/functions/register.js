@@ -53,13 +53,32 @@ async function processPaymentSlip(paymentSlipData, registrationId) {
   }
   
   try {
-    // For now, we'll store the file as base64 in the database
-    // In a production environment, you might want to upload to Supabase Storage or another service
+    // Convert base64 data URL to buffer
+    const base64Data = paymentSlipData.fileData.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
+    
     const fileExtension = paymentSlipData.fileName.split('.').pop().toLowerCase();
     const fileName = `payment-slip-${registrationId}.${fileExtension}`;
     
-    // Return a data URL that can be used to display/download the file
-    return paymentSlipData.fileData;
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('payment-slips')
+      .upload(fileName, buffer, {
+        contentType: paymentSlipData.fileType,
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Supabase Storage upload error:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('payment-slips')
+      .getPublicUrl(fileName);
+    
+    return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error processing payment slip:', error);
     return null;

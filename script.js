@@ -222,17 +222,18 @@ async function fetchRegistrationCounts() {
         const response = await fetch('/.netlify/functions/admin-registrations');
         if (response.ok) {
             const data = await response.json();
-            // Transform the simplified API response to match expected format
+            // Transform the API response to match expected format
+            const stats = data.statistics || {};
             const transformedData = {
                 counts: {
-                    total: data.totalRegistrations || 0,
-                    earlyBird: data.earlyBirdCount || 0,
-                    recent24h: data.recent24hCount || 0
+                    total: stats.total_registrations || 0,
+                    earlyBird: stats.early_bird_count || 0,
+                    recent24h: stats.recent_24h_count || 0
                 },
                 earlyBird: {
-                    available: (data.earlyBirdCount || 0) < 150,
-                    remaining: Math.max(0, 150 - (data.earlyBirdCount || 0)),
-                    percentage: Math.round(((data.earlyBirdCount || 0) / 150) * 100)
+                    available: (stats.early_bird_count || 0) < 150,
+                    remaining: Math.max(0, 150 - (stats.early_bird_count || 0)),
+                    percentage: Math.round(((stats.early_bird_count || 0) / 150) * 100)
                 }
             };
             updateCounterDisplay(transformedData);
