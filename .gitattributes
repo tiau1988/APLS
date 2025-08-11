@@ -1,5 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+<<<<<<< HEAD
 
 # Ensure certain file types are treated as text
 *.html text
@@ -18,3 +19,5 @@
 *.svg binary
 *.ico binary
 *.pdf binary
+=======
+>>>>>>> 7cda8c81c2aea1aa9ee4e34ec5ccf76df8ed0308
