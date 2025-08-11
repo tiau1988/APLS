@@ -209,7 +209,7 @@
 
         async function loadRegistrations() {
             try {
-                const response = await fetch('/api/admin/registrations');
+                const response = await fetch('/.netlify/functions/admin-registrations');
                 const data = await response.json();
 
                 if (data.success) {

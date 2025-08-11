@@ -219,7 +219,7 @@ function toggleOtherDistrict() {
 // Live Registration Counter Functions
 async function fetchRegistrationCounts() {
     try {
-        const response = await fetch('/api/admin/registrations');
+        const response = await fetch('/.netlify/functions/admin-registrations');
         if (response.ok) {
             const data = await response.json();
             // Transform the simplified API response to match expected format
@@ -514,10 +514,10 @@ function validateForm() {
     return isValid;
 }
 
-// Submit registration to simplified API
+// Submit registration to Netlify function
 async function submitRegistration(data) {
     try {
-        const response = await fetch('/api/admin/register', {
+        const response = await fetch('/.netlify/functions/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -632,8 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Utility functions for viewing and clearing registrations
 async function viewRegistrations() {
     try {
-        // Try to fetch from simplified API first
-        const response = await fetch('/api/admin/registrations');
+        // Try to fetch from Netlify function first
+        const response = await fetch('/.netlify/functions/admin-registrations');
         if (response.ok) {
             const result = await response.json();
             console.log('API Registrations:', result.registrations);
