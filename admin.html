@@ -145,13 +145,125 @@
         .export-btn:hover {
             background: #218838;
         }
+
+        /* Authentication Styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-form {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-form h2 {
+            color: #1e3c72;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #2a5298;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            margin-top: 10px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Form -->
+    <div id="loginContainer" class="auth-container">
+        <div class="login-form">
+            <h2>🔐 Admin Login</h2>
+            <div id="errorMessage" class="error-message"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="dashboardContainer" class="container hidden">
         <div class="header">
             <h1>🦁 APLLS 2026 Admin Dashboard</h1>
             <p>Registration Management System</p>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
         <div class="stats" id="stats">
@@ -205,11 +317,101 @@
     </div>
 
     <script>
+        // Authentication Configuration
+        const ADMIN_PASSWORD = 'APLLS2026'; // Change this to a secure password
+        const SESSION_KEY = 'aplls_admin_session';
+        const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+
         let registrationsData = [];
+
+        // Authentication Functions
+        function checkAuthentication() {
+            const session = localStorage.getItem(SESSION_KEY);
+            if (session) {
+                const sessionData = JSON.parse(session);
+                const now = new Date().getTime();
+                
+                if (now < sessionData.expiry) {
+                    showDashboard();
+                    return true;
+                } else {
+                    localStorage.removeItem(SESSION_KEY);
+                }
+            }
+            showLogin();
+            return false;
+        }
+
+        function showLogin() {
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('dashboardContainer').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('dashboardContainer').classList.remove('hidden');
+            loadRegistrations();
+        }
+
+        function login(password) {
+            if (password === ADMIN_PASSWORD) {
+                const now = new Date().getTime();
+                const sessionData = {
+                    authenticated: true,
+                    expiry: now + SESSION_DURATION
+                };
+                localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+                showDashboard();
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            localStorage.removeItem(SESSION_KEY);
+            showLogin();
+        }
+
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Login Form Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = document.getElementById('password').value;
+                
+                if (login(password)) {
+                    document.getElementById('password').value = '';
+                } else {
+                    showLoginError('Invalid password. Please try again.');
+                    document.getElementById('password').value = '';
+                }
+            });
+
+            // Check authentication on page load
+            checkAuthentication();
+        });
 
         async function loadRegistrations() {
             try {
-                const response = await fetch('/.netlify/functions/admin-registrations');
+                // Add authentication header
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': ADMIN_PASSWORD
+                };
+                
+                const response = await fetch('/.netlify/functions/admin-registrations', {
+                    method: 'GET',
+                    headers: headers
+                });
                 const data = await response.json();
 
                 if (data.success) {
@@ -338,11 +540,12 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Load data on page load
-        loadRegistrations();
-
-        // Auto-refresh every 30 seconds
-        setInterval(loadRegistrations, 30000);
+        // Auto-refresh every 30 seconds (only when authenticated)
+        setInterval(() => {
+            if (document.getElementById('dashboardContainer').classList.contains('hidden') === false) {
+                loadRegistrations();
+            }
+        }, 30000);
     </script>
 </body>
 </html>

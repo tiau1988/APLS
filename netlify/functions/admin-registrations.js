@@ -14,6 +14,16 @@ if (!supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Admin authentication configuration
+const ADMIN_PASSWORD = 'APLLS2026'; // Should match frontend password
+const ADMIN_TOKEN_HEADER = 'x-admin-token';
+
+// Helper function to verify admin authentication
+function verifyAdminAuth(headers) {
+  const token = headers[ADMIN_TOKEN_HEADER] || headers['X-Admin-Token'];
+  return token === ADMIN_PASSWORD;
+}
+
 // Helper function to get all registrations from Supabase
 async function getAllRegistrations() {
   const { data, error } = await supabase
@@ -43,6 +53,22 @@ exports.handler = async (event, context) => {
   }
 
   if (req.method === 'GET') {
+    // Check admin authentication
+    if (!verifyAdminAuth(event.headers)) {
+      return {
+        statusCode: 401,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Unauthorized access',
+          message: 'Admin authentication required'
+        })
+      };
+    }
+
     try {
       // Get all registrations from Supabase
       const allRegistrations = await getAllRegistrations();
