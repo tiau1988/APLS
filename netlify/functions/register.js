@@ -191,16 +191,32 @@ exports.handler = async (event, context) => {
         lastName,
         email,
         phone,
+        residenceCountry,
+        passportNric,
+        gender,
+        address,
         clubName,
-        position,
         district,
+        otherDistrict,
+        ppoasPosition,
+        districtCabinetPosition,
+        clubPosition,
+        positionInNgo,
+        otherNgos,
         registrationType,
+        vegetarian,
+        poolsideParty,
+        communityService,
+        installationBanquet,
+        termsConditions,
+        marketingEmails,
+        privacyPolicy,
         totalAmount,
         paymentSlip
       } = req.body;
 
       // Validate required fields (email is now optional)
-      if (!firstName || !lastName || !phone || !clubName || !position || !district || !registrationType) {
+      if (!firstName || !lastName || !phone || !residenceCountry || !passportNric || !clubName || !position || !district || !registrationType) {
         return {
           statusCode: 400,
           headers: {
@@ -241,6 +257,15 @@ exports.handler = async (event, context) => {
         paymentSlipUrl = await processPaymentSlip(paymentSlip, registrationId);
       }
 
+      // Helper function to convert string to boolean
+      const toBool = (value) => {
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') {
+          return value.toLowerCase() === 'yes' || value.toLowerCase() === 'true';
+        }
+        return false;
+      };
+
       // Create registration object
       const registration = {
         registration_id: registrationId,
@@ -248,10 +273,27 @@ exports.handler = async (event, context) => {
         last_name: lastName,
         email: email && email.trim() ? email.toLowerCase() : null,
         phone,
+        residence_country: residenceCountry,
+        passport_nric: passportNric,
+        gender: gender || null,
+        address: address || null,
         club_name: clubName,
-        position,
-        district,
+        district: district === 'other' ? otherDistrict : district,
+        other_district: district === 'other' ? otherDistrict : null,
+        ppoas_position: ppoasPosition || null,
+        district_cabinet_position: districtCabinetPosition || null,
+        club_position: clubPosition || null,
+        position: clubPosition || ppoasPosition || districtCabinetPosition || 'Member',
+        position_in_ngo: positionInNgo || null,
+        other_ngos: otherNgos || null,
         registration_type: registrationType,
+        vegetarian: toBool(vegetarian),
+        poolside_party: toBool(poolsideParty),
+        community_service: toBool(communityService),
+        installation_banquet: toBool(installationBanquet),
+        terms_conditions: toBool(termsConditions),
+        marketing_emails: toBool(marketingEmails),
+        privacy_policy: toBool(privacyPolicy),
         total_amount: parseFloat(totalAmount) || 0,
         payment_slip_url: paymentSlipUrl,
         status: 'pending'

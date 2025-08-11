@@ -90,6 +90,8 @@ exports.handler = async (event, context) => {
         full_name: `${reg.first_name} ${reg.last_name}`,
         email: reg.email,
         phone: reg.phone || '-',
+        residence_country: reg.residence_country || '-',
+        passport_nric: reg.passport_nric || '-',
         club_name: reg.club_name || '-',
         district: reg.district || '-',
         position: reg.position || '-',

@@ -7,6 +7,60 @@ function hideMenu() {
     document.getElementById('navLinks').style.right = '-200px';
 }
 
+// Country code mapping
+const countryCodeMap = {
+    'Malaysia - Sabah': '+60',
+    'Malaysia - Sarawak': '+60',
+    'Malaysia - West Malaysia': '+60',
+    'Australia': '+61',
+    'Brunei': '+673',
+    'Cambodia': '+855',
+    'China': '+86',
+    'Hong Kong': '+852',
+    'United States': '+1',
+    'Indonesia': '+62',
+    'Japan': '+81',
+    'Korea': '+82',
+    'Macau': '+853',
+    'Mongolia': '+976',
+    'Bhutan': '+975',
+    'New Zealand': '+64',
+    'Guam': '+1',
+    'Singapore': '+65',
+    'Philippines': '+63',
+    'Taipei': '+886',
+    'Thailand': '+66',
+    'Vietnam': '+84',
+    'Sri Lanka': '+94'
+};
+
+// Auto-populate country code based on residence country selection
+function setupCountryCodeAutofill() {
+    const residenceCountrySelect = document.getElementById('residenceCountry');
+    const phoneInput = document.getElementById('phone');
+    
+    if (residenceCountrySelect && phoneInput) {
+        residenceCountrySelect.addEventListener('change', function() {
+            const selectedCountry = this.value;
+            const countryCode = countryCodeMap[selectedCountry];
+            
+            if (countryCode) {
+                // Check if phone field is empty or only contains a country code
+                const currentValue = phoneInput.value.trim();
+                const isEmptyOrOnlyCountryCode = !currentValue || 
+                    Object.values(countryCodeMap).some(code => currentValue === code || currentValue === code + ' ');
+                
+                if (isEmptyOrOnlyCountryCode) {
+                    phoneInput.value = countryCode + ' ';
+                    phoneInput.focus();
+                    // Position cursor after the country code
+                    phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
+                }
+            }
+        });
+    }
+}
+
 // Smooth scrolling for navigation links
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('nav a[href^="#"]');
@@ -36,6 +90,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Initialize country code autofill functionality
+    setupCountryCodeAutofill();
 });
 
 // Countdown Timer
@@ -434,10 +491,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     lastName,
                     email: rawData.email,
                     phone: rawData.phone,
+                    residenceCountry: rawData.residenceCountry,
+                    passportNric: rawData.passportNric,
+                    gender: rawData.gender,
+                    address: rawData.address,
                     clubName: rawData.clubName,
-                    position: rawData.clubPosition || rawData.ppoasPosition || rawData.districtCabinetPosition || 'Member',
-                    district: rawData.district === 'other' ? rawData.otherDistrict : rawData.district,
+                    district: rawData.district,
+                    otherDistrict: rawData.otherDistrict,
+                    ppoasPosition: rawData.ppoasPosition,
+                    districtCabinetPosition: rawData.districtCabinetPosition,
+                    clubPosition: rawData.clubPosition,
+                    positionInNgo: rawData.positionInNgo,
+                    otherNgos: rawData.otherNgos,
                     registrationType: rawData.registrationType,
+                    vegetarian: rawData.vegetarian === 'yes' ? 'yes' : 'no',
+                    poolsideParty: rawData.poolsideParty === 'poolside-party' ? 'yes' : 'no',
+                    communityService: rawData.communityService === 'community-service' ? 'yes' : 'no',
+                    installationBanquet: rawData.installationBanquet === 'installation-banquet' ? 'yes' : 'no',
+                    termsConditions: rawData.termsConditions === 'yes' ? 'yes' : 'no',
+                    marketingEmails: rawData.marketingEmails === 'yes' ? 'yes' : 'no',
+                    privacyPolicy: rawData.privacyPolicy === 'yes' ? 'yes' : 'no',
                     totalAmount: totalAmount,
                     paymentSlip: {
                         fileName: file.name,

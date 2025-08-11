@@ -112,15 +112,15 @@
                 </div>
                 <div class="about-stats">
                     <div class="stat">
-                        <h3>500+</h3>
+                        <h3>800+</h3>
                         <p>Attendees</p>
                     </div>
                     <div class="stat">
-                        <h3>50+</h3>
+                        <h3>8 speakers</h3>
                         <p>Speakers</p>
                     </div>
                     <div class="stat">
-                        <h3>20+</h3>
+                        <h3>16+</h3>
                         <p>Countries</p>
                     </div>
                 </div>
@@ -397,6 +397,41 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="residenceCountry">Residence Country *</label>
+                                    <select id="residenceCountry" name="residenceCountry" required>
+                                        <option value="">Select Country</option>
+                                        <option value="Malaysia - Sabah">Malaysia - Sabah</option>
+                                        <option value="Malaysia - Sarawak">Malaysia - Sarawak</option>
+                                        <option value="Malaysia - West Malaysia">Malaysia - West Malaysia</option>
+                                        <option value="Australia">Australia</option>
+                                        <option value="Brunei">Brunei</option>
+                                        <option value="Cambodia">Cambodia</option>
+                                        <option value="China">China</option>
+                                        <option value="Hong Kong">Hong Kong</option>
+                                        <option value="United States">United States</option>
+                                        <option value="Indonesia">Indonesia</option>
+                                        <option value="Japan">Japan</option>
+                                        <option value="Korea">Korea</option>
+                                        <option value="Macau">Macau</option>
+                                        <option value="Mongolia">Mongolia</option>
+                                        <option value="Bhutan">Bhutan</option>
+                                        <option value="New Zealand">New Zealand</option>
+                                        <option value="Guam">Guam</option>
+                                        <option value="Singapore">Singapore</option>
+                                        <option value="Philippines">Philippines</option>
+                                        <option value="Taipei">Taipei</option>
+                                        <option value="Thailand">Thailand</option>
+                                        <option value="Vietnam">Vietnam</option>
+                                        <option value="Sri Lanka">Sri Lanka</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="passportNric">Passport / NRIC No. *</label>
+                                    <input type="text" id="passportNric" name="passportNric" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="address">Address</label>
                                     <textarea id="address" name="address" rows="3"></textarea>
                                 </div>
@@ -581,6 +616,7 @@
                             <h4>Payment Information</h4>
                             <div class="payment-details">
                                 <h5>Payment to be banked into the following:</h5>
+                                <p style="color: #e74c3c; font-weight: bold; margin-bottom: 15px;">Remember reference to be: APLLS & your name</p>
                                 <div class="bank-details">
                                     <div class="bank-info">
                                         <span class="label">Bank Name:</span>

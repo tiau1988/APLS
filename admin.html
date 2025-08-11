@@ -298,6 +298,8 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone</th>
+                            <th>Country</th>
+                            <th>Passport/NRIC</th>
                             <th>Organization</th>
                             <th>Position</th>
                             <th>Status</th>
@@ -481,7 +483,7 @@
             const tbody = document.getElementById('registrationsBody');
             
             if (registrations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="loading">No registrations found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="loading">No registrations found.</td></tr>';
                 return;
             }
 
@@ -491,8 +493,9 @@
                     <td>${reg.full_name}</td>
                     <td>${reg.email}</td>
                     <td>${reg.phone || '-'}</td>
+                    <td>${reg.residence_country || '-'}</td>
+                    <td>${reg.passport_nric || '-'}</td>
                     <td>${reg.club_name || '-'}</td>
-                    <td>${reg.district || '-'}</td>
                     <td>${reg.position || '-'}</td>
                     <td>${reg.registration_type}</td>
                     <td>RM ${reg.total_amount}</td>
@@ -504,7 +507,7 @@
 
         function showError(message) {
             const tbody = document.getElementById('registrationsBody');
-            tbody.innerHTML = `<tr><td colspan="11" class="error">${message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="13" class="error">${message}</td></tr>`;
         }
 
         function exportToCSV() {
@@ -513,7 +516,7 @@
                 return;
             }
 
-            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date', 'Payment Slip URL'];
+            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Country', 'Passport/NRIC', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date', 'Payment Slip URL'];
             const csvContent = [
                 headers.join(','),
                 ...registrationsData.map(reg => [
@@ -521,6 +524,8 @@
                     `"${reg.full_name}"`,
                     reg.email,
                     reg.phone || '',
+                    `"${reg.residence_country || ''}"`,
+                    `"${reg.passport_nric || ''}"`,
                     `"${reg.club_name || ''}"`,
                     `"${reg.district || ''}"`,
                     `"${reg.position || ''}"`,
