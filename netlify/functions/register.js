@@ -199,8 +199,8 @@ exports.handler = async (event, context) => {
         paymentSlip
       } = req.body;
 
-      // Validate required fields
-      if (!firstName || !lastName || !email || !phone || !clubName || !position || !district || !registrationType) {
+      // Validate required fields (email is now optional)
+      if (!firstName || !lastName || !phone || !clubName || !position || !district || !registrationType) {
         return {
           statusCode: 400,
           headers: {
@@ -214,20 +214,22 @@ exports.handler = async (event, context) => {
         };
       }
 
-      // Check for duplicate email
-      const existingRegistration = await findRegistrationByEmail(email);
-      if (existingRegistration) {
-        return {
-          statusCode: 409,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: false,
-            message: 'Email already registered. Please use a different email address.'
-          })
-        };
+      // Check for duplicate email only if email is provided
+      if (email && email.trim()) {
+        const existingRegistration = await findRegistrationByEmail(email);
+        if (existingRegistration) {
+          return {
+            statusCode: 409,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Email already registered. Please use a different email address.'
+            })
+          };
+        }
       }
 
       // Generate registration ID
@@ -244,7 +246,7 @@ exports.handler = async (event, context) => {
         registration_id: registrationId,
         first_name: firstName,
         last_name: lastName,
-        email: email.toLowerCase(),
+        email: email && email.trim() ? email.toLowerCase() : null,
         phone,
         club_name: clubName,
         position,
@@ -272,7 +274,7 @@ exports.handler = async (event, context) => {
             id: savedRegistration.id,
             registration_id: registrationId,
             name: `${firstName} ${lastName}`,
-            email: email.toLowerCase(),
+            email: email && email.trim() ? email.toLowerCase() : null,
             club_name: clubName,
             registration_type: registrationType,
             total_amount: parseFloat(totalAmount) || 0,
