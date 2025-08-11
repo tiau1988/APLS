@@ -6,11 +6,10 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('payment-slips', 'payment-slips', true);
 
 -- Set up RLS policies for the payment-slips bucket
--- Allow authenticated users to upload files
-CREATE POLICY "Allow authenticated users to upload payment slips" ON storage.objects
+-- Allow anonymous users to upload files (for Netlify functions using anon key)
+CREATE POLICY "Allow anonymous users to upload payment slips" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'payment-slips' AND
-  auth.role() = 'authenticated'
+  bucket_id = 'payment-slips'
 );
 
 -- Allow public read access to payment slips
@@ -19,16 +18,14 @@ FOR SELECT USING (
   bucket_id = 'payment-slips'
 );
 
--- Allow authenticated users to update their own files
-CREATE POLICY "Allow authenticated users to update payment slips" ON storage.objects
+-- Allow anonymous users to update files (for Netlify functions using anon key)
+CREATE POLICY "Allow anonymous users to update payment slips" ON storage.objects
 FOR UPDATE USING (
-  bucket_id = 'payment-slips' AND
-  auth.role() = 'authenticated'
+  bucket_id = 'payment-slips'
 );
 
--- Allow authenticated users to delete their own files
-CREATE POLICY "Allow authenticated users to delete payment slips" ON storage.objects
+-- Allow anonymous users to delete files (for Netlify functions using anon key)
+CREATE POLICY "Allow anonymous users to delete payment slips" ON storage.objects
 FOR DELETE USING (
-  bucket_id = 'payment-slips' AND
-  auth.role() = 'authenticated'
+  bucket_id = 'payment-slips'
 );
