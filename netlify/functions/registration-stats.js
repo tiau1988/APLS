@@ -70,8 +70,8 @@ exports.handler = async (event, context) => {
       totalCount: totalCount || 0,
       earlyBirdCount: earlyBirdCount || 0,
       recentCount: recentCount || 0,
-      earlyBirdLimit: 100, // Set your early bird limit here
-      earlyBirdRemaining: Math.max(0, 100 - (earlyBirdCount || 0))
+      earlyBirdLimit: 150, // Set your early bird limit here
+      earlyBirdRemaining: Math.max(0, 150 - (earlyBirdCount || 0))
     };
 
     return {
