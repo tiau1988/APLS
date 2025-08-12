@@ -41,11 +41,11 @@ exports.handler = async (event, context) => {
       throw totalError;
     }
 
-    // Get early bird registrations count (assuming early bird is registration_type = 'early_bird')
+    // Get early bird registrations count (registration_type = 'early-bird')
     const { count: earlyBirdCount, error: earlyBirdError } = await supabase
       .from('registrations')
       .select('*', { count: 'exact', head: true })
-      .eq('registration_type', 'early_bird');
+      .eq('registration_type', 'early-bird');
 
     if (earlyBirdError) {
       console.error('Error fetching early bird count:', earlyBirdError);

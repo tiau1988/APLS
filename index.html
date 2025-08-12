@@ -73,7 +73,7 @@
 
     <!-- Promotional Banner Section -->
     <section id="home" class="promotional-banner-fullwidth">
-        <img src="assets/promo_landscape.jpg" alt="Asia Pacific Lions Leaders Summit 2026 - Promotional Banner" class="banner-image-fullwidth">
+        <img src="assets/promo_landscape2.jpg" alt="Asia Pacific Lions Leaders Summit 2026 - Promotional Banner" class="banner-image-fullwidth">
     </section>
 
     <!-- Countdown Section -->
@@ -153,14 +153,26 @@
                 </div>
                 <div class="speaker-card">
                     <img src="assets/ellis.png" alt="Ellis" class="speaker-image">
-                    <h3 class="speaker-name">PID Datin Ellis Suriyati & Chiu Yu Ling</h3>
-                    <p class="speaker-title"></p>
+                    <h3 class="speaker-name">PID Datin Ellis Suriyati</h3>
+                    <p class="speaker-title">Past International Director / LCIF Area Leader </p>
                     <p class="speaker-bio">Speaker for LCIF Mission & Goal</p>
                 </div>
                 <div class="speaker-card">
-                    <img src="assets/boston lu.jpg.png" alt="Boston Ellen" class="speaker-image">
-                    <h3 class="speaker-name">Boston Ho & Ellen Lu</h3>
-                    <p class="speaker-title">  </p>
+                    <img src="assets/Chui Ling.png" alt="Boston Ellen" class="speaker-image">
+                    <h3 class="speaker-name">Chiu YuLing</h3>
+                    <p class="speaker-title">Senior Regional Development Specialist – OSEAL / LCIF Development</p>
+                    <p class="speaker-bio">Speaker for LCIF Mission & Goal</p>
+                </div>
+                <div class="speaker-card">
+                    <img src="assets/boston.png" alt="Boston Ellen" class="speaker-image">
+                    <h3 class="speaker-name">Boston Ho</h3>
+                    <p class="speaker-title">Lawyer</p>
+                    <p class="speaker-bio">Speaker for Parliamentary Procedure Workshop</p>
+                </div>
+                <div class="speaker-card">
+                    <img src="assets/ellenlu.png" alt="Boston Ellen" class="speaker-image">
+                    <h3 class="speaker-name">Ellen Lu</h3>
+                    <p class="speaker-title">2022 JCI Malaysia Past National President</p>
                     <p class="speaker-bio">Speaker for Parliamentary Procedure Workshop</p>
                 </div>
             </div>
@@ -372,31 +384,6 @@
                             <h4>Personal Information</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="fullName">Full Name *</label>
-                                    <input type="text" id="fullName" name="fullName" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="email">Email Address *</label>
-                                    <input type="email" id="email" name="email" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="phone">Phone Number *</label>
-                                    <input type="tel" id="phone" name="phone" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="gender">Gender</label>
-                                    <select id="gender" name="gender">
-                                        <option value="">Select Gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
                                     <label for="residenceCountry">Residence Country *</label>
                                     <select id="residenceCountry" name="residenceCountry" required>
                                         <option value="">Select Country</option>
@@ -426,16 +413,36 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label for="gender">Gender</label>
+                                    <select id="gender" name="gender">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name *</label>
+                                    <input type="text" id="fullName" name="fullName" required>
+                                </div>
+                                <div class="form-group">
                                     <label for="passportNric">Passport / NRIC No. *</label>
                                     <input type="text" id="passportNric" name="passportNric" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="address">Address</label>
-                                    <textarea id="address" name="address" rows="3"></textarea>
+                                    <label for="email">Email Address *</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Phone Number *</label>
+                                    <input type="text" id="phone" name="phone" required>
                                 </div>
                             </div>
+
                         </div>
 
                         <!-- Lions Club Information Section -->
@@ -443,12 +450,12 @@
                             <h4>Lions Club Information</h4>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="clubName">Club Name *</label>
-                                    <input type="text" id="clubName" name="clubName" required>
+                                    <label for="clubName">Club Name</label>
+                                    <input type="text" id="clubName" name="clubName">
                                 </div>
                                 <div class="form-group">
-                                    <label for="district">District *</label>
-                                    <select id="district" name="district" required>
+                                    <label for="district">District</label>
+                                    <select id="district" name="district">
                                         <option value="">Select District</option>
                                         <option value="308-A1">308-A1</option>
                                         <option value="308-A2">308-A2</option>
@@ -664,15 +671,7 @@
                         <div class="form-section">
                             <div class="form-group checkbox">
                                 <input type="checkbox" id="termsConditions" name="termsConditions" required>
-                                <label for="termsConditions">I agree to the <a href="#terms" target="_blank">Terms and Conditions</a> *</label>
-                            </div>
-                            <div class="form-group checkbox">
-                                <input type="checkbox" id="marketingEmails" name="marketingEmails">
-                                <label for="marketingEmails">I would like to receive updates about future events</label>
-                            </div>
-                            <div class="form-group checkbox">
-                                <input type="checkbox" id="privacyPolicy" name="privacyPolicy" required>
-                                <label for="privacyPolicy">I agree to the <a href="#privacy" target="_blank">Privacy Policy</a> *</label>
+                                <label for="termsConditions">I agree to the terms and conditions *</label>
                             </div>
                         </div>
 
@@ -715,10 +714,6 @@
                         <div class="feature">
                             <i class="fas fa-check"></i>
                             <span>Business center and WiFi</span>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-check"></i>
-                            <span>Fitness center and spa</span>
                         </div>
                         <div class="feature">
                             <i class="fas fa-check"></i>
@@ -798,48 +793,21 @@
             <div class="contact-content">
                 <div class="contact-info">
                     <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div>
-                            <h4>Email</h4>
-                            <p>aplls2026@gmail.com</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
                         <i class="fas fa-phone"></i>
                         <div>
                             <h4>Phone</h4>
-                            <p>+60 84-319 988</p>
+                            <p>+60198897657</p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
+                        <i class="fab fa-whatsapp"></i>
                         <div>
-                            <h4>Address</h4>
-                            <p>Kingwood Hotel Sibu<br>12, Jalan Tunku Abdul Rahman<br>96000 Sibu, Sarawak, Malaysia</p>
+                            <h4>WhatsApp</h4>
+                            <p><a href="https://wa.link/1gwli2" target="_blank">Chat with us on WhatsApp</a></p>
                         </div>
                     </div>
                 </div>
-                <div class="contact-form">
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <label for="contactName">Name *</label>
-                            <input type="text" id="contactName" name="contactName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="contactEmail">Email *</label>
-                            <input type="email" id="contactEmail" name="contactEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Subject *</label>
-                            <input type="text" id="subject" name="subject" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Message *</label>
-                            <textarea id="message" name="message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary">Send Message</button>
-                    </form>
-                </div>
+
             </div>
         </div>
     </section>
@@ -847,64 +815,9 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>APLLS 2026</h4>
-                    <p>Asia Pacific Lions Leadership Summit</p>
-                    <p>Building Tomorrow's Leaders Today</p>
-                    <p>July 25-27, 2026 | Sibu, Sarawak, Malaysia</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#speakers">Speakers</a></li>
-                        <li><a href="#schedule">Schedule</a></li>
-                        <li><a href="#register">Register</a></li>
-                        <li><a href="#venue">Venue</a></li>
-                        <li><a href="#faq">FAQ</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="#terms">Terms & Conditions</a></li>
-                        <li><a href="#privacy">Privacy Policy</a></li>
-                        <li><a href="#refund">Refund Policy</a></li>
-                        <li><a href="#accommodation">Accommodation</a></li>
-                        <li><a href="#travel">Travel Information</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Contact Information</h4>
-                    <p><i class="fas fa-envelope"></i> aplls2026@gmail.com</p>
-                    <p><i class="fas fa-phone"></i> +60 84-319 988</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Kingwood Hotel Sibu<br>
-                    12, Jalan Tunku Abdul Rahman<br>
-                    96000 Sibu, Sarawak, Malaysia</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                    </div>
-                    <div class="newsletter-signup">
-                        <h5>Newsletter</h5>
-                        <form class="newsletter-form">
-                            <input type="email" placeholder="Enter your email" required>
-                            <button type="submit"><i class="fas fa-paper-plane"></i></button>
-                        </form>
-                    </div>
-                </div>
-            </div>
             <div class="footer-bottom">
                 <div class="footer-bottom-content">
-                    <p>&copy; 2024 Asia Pacific Lions Leadership Summit 2026. All rights reserved.</p>
+                    <p>Asia Pacific Lions Leadership Summit 2026. All rights reserved.</p>
                     <p>Organized by Lions Club of Sibu Pahlawan | Powered by Lions International</p>
                 </div>
             </div>

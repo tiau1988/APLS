@@ -215,8 +215,8 @@ exports.handler = async (event, context) => {
         paymentSlip
       } = req.body;
 
-      // Validate required fields (email is required)
-      if (!firstName || !lastName || !email || !phone || !residenceCountry || !passportNric || !clubName || !district || !registrationType) {
+      // Validate required fields (email is required, Lions Club fields are optional)
+      if (!firstName || !lastName || !email || !phone || !residenceCountry || !passportNric || !registrationType) {
         return {
           statusCode: 400,
           headers: {

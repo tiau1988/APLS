@@ -604,15 +604,7 @@ function validateForm() {
         }
     }
     
-    // Phone validation (basic)
-    const phoneField = document.getElementById('phone');
-    if (phoneField && phoneField.value) {
-        const phonePattern = /^[\+]?[1-9][\d]{0,15}$/;
-        if (!phonePattern.test(phoneField.value.replace(/[\s\-\(\)]/g, ''))) {
-            isValid = false;
-            phoneField.classList.add('error');
-        }
-    }
+    // Phone validation removed - allow any text format
     
     return isValid;
 }
