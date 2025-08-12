@@ -520,38 +520,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Submit registration data
-                try {
-                    console.log('Submitting registration data:', registrationData);
+                console.log('Submitting registration data:', registrationData);
+                
+                const response = await submitRegistration(registrationData);
+                
+                if (response.success) {
+                    showFormMessage('Registration successful! We will contact you soon.', 'success');
+                    registrationForm.reset();
+                    updateTotalAmount(); // Reset the total calculation
                     
-                    const response = await submitRegistration(registrationData);
-                    
-                    if (response.success) {
-                        showFormMessage('Registration successful! We will contact you soon.', 'success');
-                        registrationForm.reset();
-                        updateTotalAmount(); // Reset the total calculation
-                        
-                        // Reset file preview
-                        if (window.resetFilePreview) {
-                            window.resetFilePreview();
-                        } else {
-                            // Fallback if the global function is not available
-                            const previewContainer = document.getElementById('file-preview-container');
-                            if (previewContainer) {
-                                previewContainer.innerHTML = '';
-                                previewContainer.style.display = 'none';
-                            }
-                        }
-                        
-                        if (uploadStatus) {
-                            uploadStatus.textContent = '';
-                            uploadStatus.className = '';
-                        }
+                    // Reset file preview
+                    if (window.resetFilePreview) {
+                        window.resetFilePreview();
                     } else {
-                        throw new Error(response.message || 'Registration failed. Please try again.');
+                        // Fallback if the global function is not available
+                        const previewContainer = document.getElementById('file-preview-container');
+                        if (previewContainer) {
+                            previewContainer.innerHTML = '';
+                            previewContainer.style.display = 'none';
+                        }
                     }
-                } catch (submitError) {
-                    console.error('Registration error:', submitError);
-                    showFormMessage('Registration failed. Please try again.', 'error');
+                    
+                    if (uploadStatus) {
+                        uploadStatus.textContent = '';
+                        uploadStatus.className = '';
+                    }
+                } else {
+                    // Show the specific error message from the backend
+                    showFormMessage(response.message || 'Registration failed. Please try again.', 'error');
                 }
                 
             } catch (error) {
