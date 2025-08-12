@@ -623,10 +623,26 @@ async function submitRegistration(data) {
         const result = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.message || 'Registration failed');
+            // Handle specific error cases
+            if (response.status === 409) {
+                // Duplicate email - return the error directly
+                return {
+                    success: false,
+                    message: result.message || 'Email already registered. Please use a different email address.'
+                };
+            } else if (response.status === 400) {
+                // Validation error - return the error directly
+                return {
+                    success: false,
+                    message: result.message || 'Please fill in all required fields correctly.'
+                };
+            } else {
+                // Other server errors - throw to trigger fallback
+                throw new Error(result.message || 'Registration failed');
+            }
         }
 
-        // Also save to localStorage as backup
+        // Success - also save to localStorage as backup
         const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
         existingRegistrations.push(data);
         localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
@@ -635,7 +651,7 @@ async function submitRegistration(data) {
     } catch (error) {
         console.error('API error, using localStorage fallback...', error);
         
-        // Fallback to localStorage if API fails
+        // Only use localStorage fallback for network/server errors, not validation errors
         try {
             const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
             existingRegistrations.push(data);
