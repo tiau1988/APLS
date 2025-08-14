@@ -52,6 +52,25 @@
             font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+        
+        .registrations-table th:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .sort-indicator.active {
+            opacity: 1;
         }
         
         .registrations-table td {
@@ -156,9 +175,9 @@
             <table class="registrations-table">
                 <thead>
                     <tr>
-                        <th>Registration ID</th>
-                        <th>Name</th>
-                        <th>Club/Organization</th>
+                        <th data-column="id" data-sort="none">Registration ID <span class="sort-indicator">↕</span></th>
+                        <th data-column="name" data-sort="none">Name <span class="sort-indicator">↕</span></th>
+                        <th data-column="club_name" data-sort="none">Club/Organization <span class="sort-indicator">↕</span></th>
                     </tr>
                 </thead>
                 <tbody id="registrationsTableBody">
@@ -186,6 +205,7 @@
     <script>
         let allRegistrations = [];
         let filteredRegistrations = [];
+        let currentSort = { column: null, direction: 'none' };
         
         // DOM elements
         const searchInput = document.getElementById('searchInput');
@@ -220,6 +240,97 @@
             }
         }
         
+        // Sorting functionality
+        function sortRegistrations(column) {
+            let direction = 'asc';
+            
+            if (currentSort.column === column) {
+                if (currentSort.direction === 'asc') {
+                    direction = 'desc';
+                } else if (currentSort.direction === 'desc') {
+                    direction = 'none';
+                } else {
+                    direction = 'asc';
+                }
+            }
+            
+            currentSort = { column, direction };
+            
+            // Update sort indicators
+            updateSortIndicators();
+            
+            if (direction === 'none') {
+                filteredRegistrations = [...allRegistrations.filter(registration => 
+                    matchesSearch(registration, searchInput.value)
+                )];
+            } else {
+                filteredRegistrations.sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    switch (column) {
+                        case 'id':
+                            aValue = parseInt(a.id) || 0;
+                            bValue = parseInt(b.id) || 0;
+                            break;
+                        case 'name':
+                            aValue = (a.name || '').toLowerCase();
+                            bValue = (b.name || '').toLowerCase();
+                            break;
+                        case 'club_name':
+                            aValue = (a.club_name || '').toLowerCase();
+                            bValue = (b.club_name || '').toLowerCase();
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (column === 'id') {
+                        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+                    } else {
+                        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+                });
+            }
+            
+            displayRegistrations();
+        }
+        
+        // Update sort indicators
+        function updateSortIndicators() {
+            const headers = document.querySelectorAll('th[data-column]');
+            headers.forEach(header => {
+                const indicator = header.querySelector('.sort-indicator');
+                const column = header.getAttribute('data-column');
+                
+                if (column === currentSort.column) {
+                    indicator.classList.add('active');
+                    if (currentSort.direction === 'asc') {
+                        indicator.textContent = '↑';
+                    } else if (currentSort.direction === 'desc') {
+                        indicator.textContent = '↓';
+                    } else {
+                        indicator.textContent = '↕';
+                    }
+                } else {
+                    indicator.classList.remove('active');
+                    indicator.textContent = '↕';
+                }
+                
+                header.setAttribute('data-sort', column === currentSort.column ? currentSort.direction : 'none');
+            });
+        }
+        
+        // Check if registration matches search term
+        function matchesSearch(registration, searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            if (!term) return true;
+            
+            return (registration.name || '').toLowerCase().includes(term) ||
+                   (registration.club_name || '').toLowerCase().includes(term);
+        }
+        
         // Display registrations in table
         function displayRegistrations() {
             if (filteredRegistrations.length === 0) {
@@ -241,18 +352,16 @@
         
         // Search functionality
         function filterRegistrations(searchTerm) {
-            const term = searchTerm.toLowerCase().trim();
+            filteredRegistrations = allRegistrations.filter(registration => 
+                matchesSearch(registration, searchTerm)
+            );
             
-            if (!term) {
-                filteredRegistrations = [...allRegistrations];
+            // Re-apply current sort if active
+            if (currentSort.column && currentSort.direction !== 'none') {
+                sortRegistrations(currentSort.column);
             } else {
-                filteredRegistrations = allRegistrations.filter(registration => 
-                    (registration.name || '').toLowerCase().includes(term) ||
-                    (registration.club_name || '').toLowerCase().includes(term)
-                );
+                displayRegistrations();
             }
-            
-            displayRegistrations();
         }
         
         // Utility functions
@@ -280,9 +389,21 @@
             filterRegistrations(e.target.value);
         });
         
+        // Add click event listeners to table headers
+        function addSortEventListeners() {
+            const headers = document.querySelectorAll('th[data-column]');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-column');
+                    sortRegistrations(column);
+                });
+            });
+        }
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             fetchRegistrations();
+            addSortEventListeners();
         });
     </script>
 </body>

@@ -40,11 +40,11 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Fetch only public registration data (ID, name, club_name)
+    // Fetch only public registration data (registration_id, name, club_name)
     const { data: registrations, error } = await supabase
       .from('registrations')
-      .select('id, first_name, last_name, club_name')
-      .order('id', { ascending: true });
+      .select('registration_id, first_name, last_name, club_name')
+      .order('registration_id', { ascending: true });
 
     if (error) {
       console.error('Supabase error:', error);
@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
 
     // Format the data and filter out any records with missing essential data
     const formattedRegistrations = registrations.map(reg => ({
-      id: reg.id,
+      id: reg.registration_id,
       name: `${reg.first_name} ${reg.last_name}`.trim(),
       club_name: reg.club_name || 'N/A'
     }));
