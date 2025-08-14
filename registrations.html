@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrations - APLLS 2026</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .registrations-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .search-container {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .registrations-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .registrations-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .registrations-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e1e5e9;
+            font-size: 14px;
+        }
+        
+        .registrations-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .registrations-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 2rem;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .registrations-container {
+                padding: 1rem;
+            }
+            
+            .registrations-table {
+                font-size: 12px;
+            }
+            
+            .registrations-table th,
+            .registrations-table td {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="assets/aplls-logo.png" alt="APLLS Logo">
+                <span>APLLS 2026</span>
+            </div>
+            <nav class="nav">
+                <a href="index.html">Home</a>
+                <a href="#about">About</a>
+                <a href="#schedule">Schedule</a>
+                <a href="#speakers">Speakers</a>
+                <a href="#contact">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="registrations-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <h1 style="text-align: center; margin-bottom: 1rem; color: #333;">Conference Registrations</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 2rem;">Search and view all registered participants</p>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by name..." autocomplete="off">
+        </div>
+        
+        <div id="loadingMessage" class="loading">Loading registrations...</div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        
+        <div id="tableContainer" style="display: none;">
+            <table class="registrations-table">
+                <thead>
+                    <tr>
+                        <th>Registration ID</th>
+                        <th>Name</th>
+                        <th>Club/Organization</th>
+                    </tr>
+                </thead>
+                <tbody id="registrationsTableBody">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No registrations found matching your search.
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>APLLS 2026</h3>
+                    <p>Asia-Pacific League of Law Students Conference</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <p>Email: info@aplls2026.com</p>
+                    <p>Phone: +60 12-345 6789</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow Us</h3>
+                    <div class="social-links">
+                        <a href="#">Facebook</a>
+                        <a href="#">Instagram</a>
+                        <a href="#">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 APLLS 2026. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let allRegistrations = [];
+        let filteredRegistrations = [];
+        
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const tableContainer = document.getElementById('tableContainer');
+        const tableBody = document.getElementById('registrationsTableBody');
+        const noResults = document.getElementById('noResults');
+        
+        // Fetch registrations data
+        async function fetchRegistrations() {
+            try {
+                const response = await fetch('/.netlify/functions/get-registrations');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    allRegistrations = data.registrations || [];
+                    filteredRegistrations = [...allRegistrations];
+                    displayRegistrations();
+                    showTable();
+                } else {
+                    throw new Error(data.error || 'Failed to fetch registrations');
+                }
+            } catch (error) {
+                console.error('Error fetching registrations:', error);
+                showError('Failed to load registrations. Please try again later.');
+            }
+        }
+        
+        // Display registrations in table
+        function displayRegistrations() {
+            if (filteredRegistrations.length === 0) {
+                tableBody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            tableBody.innerHTML = filteredRegistrations.map(registration => `
+                <tr>
+                    <td>#${registration.id}</td>
+                    <td>${escapeHtml(registration.name || 'N/A')}</td>
+                    <td>${escapeHtml(registration.club_name || 'N/A')}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Search functionality
+        function filterRegistrations(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (!term) {
+                filteredRegistrations = [...allRegistrations];
+            } else {
+                filteredRegistrations = allRegistrations.filter(registration => 
+                    (registration.name || '').toLowerCase().includes(term) ||
+                    (registration.club_name || '').toLowerCase().includes(term)
+                );
+            }
+            
+            displayRegistrations();
+        }
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showTable() {
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            tableContainer.style.display = 'block';
+        }
+        
+        function showError(message) {
+            loadingMessage.style.display = 'none';
+            tableContainer.style.display = 'none';
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Event listeners
+        searchInput.addEventListener('input', (e) => {
+            filterRegistrations(e.target.value);
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchRegistrations();
+        });
+    </script>
+</body>
+</html>
