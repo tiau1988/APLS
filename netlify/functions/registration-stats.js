@@ -52,24 +52,9 @@ exports.handler = async (event, context) => {
       throw earlyBirdError;
     }
 
-    // Get registrations from last 24 hours
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const { count: recentCount, error: recentError } = await supabase
-      .from('registrations')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', yesterday.toISOString());
-
-    if (recentError) {
-      console.error('Error fetching recent count:', recentError);
-      throw recentError;
-    }
-
     const stats = {
       totalCount: totalCount || 0,
       earlyBirdCount: earlyBirdCount || 0,
-      recentCount: recentCount || 0,
       earlyBirdLimit: 150, // Set your early bird limit here
       earlyBirdRemaining: Math.max(0, 150 - (earlyBirdCount || 0))
     };

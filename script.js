@@ -193,6 +193,62 @@ function toggleFaq(element) {
     }
 }
 
+// Date-based pricing logic
+function updatePricingOptions() {
+    const registrationSelect = document.getElementById('registrationType');
+    if (!registrationSelect) return;
+    
+    const currentDate = new Date();
+    const earlyBirdEnd = new Date('2025-08-14T23:59:59');
+    const standardEnd = new Date('2025-12-31T23:59:59');
+    const lateEnd = new Date('2026-05-31T23:59:59');
+    
+    // Get all options
+    const earlyBirdOption = registrationSelect.querySelector('option[value="early-bird"]');
+    const standardOption = registrationSelect.querySelector('option[value="standard"]');
+    const lateOption = registrationSelect.querySelector('option[value="late"]');
+    
+    // Reset all options to visible
+    if (earlyBirdOption) earlyBirdOption.style.display = 'block';
+    if (standardOption) standardOption.style.display = 'block';
+    if (lateOption) lateOption.style.display = 'block';
+    
+    // Hide options based on current date
+    if (currentDate > earlyBirdEnd) {
+        // After August 14, 2025 - hide early bird
+        if (earlyBirdOption) {
+            earlyBirdOption.style.display = 'none';
+            // If early bird is currently selected, reset selection
+            if (registrationSelect.value === 'early-bird') {
+                registrationSelect.value = '';
+            }
+        }
+    }
+    
+    if (currentDate > standardEnd) {
+        // After December 31, 2025 - hide standard, only show late
+        if (standardOption) {
+            standardOption.style.display = 'none';
+            if (registrationSelect.value === 'standard') {
+                registrationSelect.value = '';
+            }
+        }
+    }
+    
+    if (currentDate > lateEnd) {
+        // After May 31, 2026 - hide late registration
+        if (lateOption) {
+            lateOption.style.display = 'none';
+            if (registrationSelect.value === 'late') {
+                registrationSelect.value = '';
+            }
+        }
+    }
+    
+    // Update total amount after option changes
+    updateTotalAmount();
+}
+
 // Update total amount calculation
 function updateTotalAmount() {
     const registrationSelect = document.getElementById('registrationType');
@@ -319,13 +375,11 @@ async function fetchRegistrationCounts() {
 function updateCounterDisplay(data) {
     const totalCountEl = document.getElementById('totalCount');
     const earlyBirdCountEl = document.getElementById('earlyBirdCount');
-    const recentCountEl = document.getElementById('recentCount');
     const earlyBirdRemainingEl = document.getElementById('earlyBirdRemaining');
     const progressBarEl = document.getElementById('earlyBirdProgress');
 
     if (totalCountEl) totalCountEl.textContent = data.counts?.total || 0;
     if (earlyBirdCountEl) earlyBirdCountEl.textContent = data.counts?.earlyBird || 0;
-    if (recentCountEl) recentCountEl.textContent = data.counts?.recent24h || 0;
     if (earlyBirdRemainingEl) earlyBirdRemainingEl.textContent = `${data.earlyBird?.remaining || 0} remaining`;
     
     if (progressBarEl) {
@@ -358,6 +412,8 @@ function startLiveCountUpdates() {
 
 // Initialize total calculation on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date-based pricing options
+    updatePricingOptions();
     // Initialize total calculation
     updateTotalAmount();
     startLiveCountUpdates(); // Start live count updates

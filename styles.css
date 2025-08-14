@@ -1636,35 +1636,24 @@ button[type="submit"] {
     background-color: white;
 }
 
-.sponsor-level {
-    margin-bottom: 40px;
-}
-
-.sponsor-level h3 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-    color: var(--gray-color);
-}
-
-.sponsor-logos {
+.sponsor-image-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 30px;
+    padding: 20px;
 }
 
-.sponsor-logos img {
-    height: 60px;
-    filter: grayscale(100%);
-    opacity: 0.7;
+.sponsor-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: var(--box-shadow);
     transition: var(--transition);
 }
 
-.sponsor-logos img:hover {
-    filter: grayscale(0);
-    opacity: 1;
+.sponsor-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .become-sponsor {
