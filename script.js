@@ -374,18 +374,8 @@ async function fetchRegistrationCounts() {
 
 function updateCounterDisplay(data) {
     const totalCountEl = document.getElementById('totalCount');
-    const earlyBirdCountEl = document.getElementById('earlyBirdCount');
-    const earlyBirdRemainingEl = document.getElementById('earlyBirdRemaining');
-    const progressBarEl = document.getElementById('earlyBirdProgress');
 
     if (totalCountEl) totalCountEl.textContent = data.counts?.total || 0;
-    if (earlyBirdCountEl) earlyBirdCountEl.textContent = data.counts?.earlyBird || 0;
-    if (earlyBirdRemainingEl) earlyBirdRemainingEl.textContent = `${data.earlyBird?.remaining || 0} remaining`;
-    
-    if (progressBarEl) {
-        const percentage = data.earlyBird?.percentage || 0;
-        progressBarEl.style.width = `${percentage}%`;
-    }
 
     // Update early bird availability in registration form
     updateEarlyBirdAvailability(data.earlyBird?.available || false);
