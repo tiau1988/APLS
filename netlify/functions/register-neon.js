@@ -209,12 +209,43 @@ exports.handler = async (event, context) => {
   // Handle POST request for registration
   if (event.httpMethod === 'POST') {
     try {
-      // Parse multipart form data
-      const result = await multipart.parse(event);
-      const { fields, files } = result;
+      let fields = {};
+      let files = [];
+      
+      // Check content type and parse accordingly
+      const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
+      
+      if (contentType.includes('application/json')) {
+        // Parse JSON data
+        const jsonData = JSON.parse(event.body);
+        fields = jsonData;
+      } else if (contentType.includes('multipart/form-data')) {
+        // Parse multipart form data
+        const result = await multipart.parse(event);
+        fields = result.fields;
+        files = result.files;
+      } else {
+        // Try to parse as JSON by default
+        try {
+          const jsonData = JSON.parse(event.body);
+          fields = jsonData;
+        } catch (parseError) {
+          return {
+            statusCode: 400,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              error: 'Invalid request format. Expected JSON or multipart form data.'
+            })
+          };
+        }
+      }
       
       // Validate required fields
-      const requiredFields = ['firstName', 'email', 'registrationType'];
+      const requiredFields = ['fullName', 'email', 'registrationType'];
       for (const field of requiredFields) {
         if (!fields[field]) {
           return {
@@ -225,7 +256,7 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
               success: false,
-              error: `Missing required field: ${field}`
+              message: `Missing required field: ${field}`
             })
           };
         }
@@ -264,13 +295,19 @@ exports.handler = async (event, context) => {
       }
       
       // Prepare registration data
+      // Split fullName into first and last name
+      const fullName = fields.fullName || '';
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       const registrationData = {
         registration_id: registrationId,
-        first_name: fields.firstName,
-        last_name: fields.lastName || '',
+        first_name: firstName,
+        last_name: lastName,
         email: fields.email,
         phone: fields.phone || '',
-        residence_country: fields.residenceCountry || '',
+        residence_country: fields.residenceCountry || fields.country || '',
         passport_nric: fields.passportNric || '',
         gender: fields.gender || '',
         address: fields.address || '',
@@ -284,13 +321,13 @@ exports.handler = async (event, context) => {
         position_in_ngo: fields.positionInNgo || '',
         other_ngos: fields.otherNgos || '',
         registration_type: fields.registrationType,
-        vegetarian: fields.vegetarian === 'true',
-        poolside_party: fields.poolsideParty === 'true',
-        community_service: fields.communityService === 'true',
-        installation_banquet: fields.installationBanquet === 'true',
-        terms_conditions: fields.termsConditions === 'true',
-        marketing_emails: fields.marketingEmails === 'true',
-        privacy_policy: fields.privacyPolicy === 'true',
+        vegetarian: fields.vegetarian === 'true' || fields.vegetarian === true,
+        poolside_party: fields.poolsideParty === 'true' || fields.poolsideParty === true,
+        community_service: fields.communityService === 'true' || fields.communityService === true,
+        installation_banquet: fields.installationBanquet === 'true' || fields.installationBanquet === true,
+        terms_conditions: fields.termsConditions === 'true' || fields.termsConditions === true,
+        marketing_emails: fields.marketingEmails === 'true' || fields.marketingEmails === true,
+        privacy_policy: fields.privacyPolicy === 'true' || fields.privacyPolicy === true,
         total_amount: parseFloat(fields.totalAmount) || 0,
         payment_slip_url: paymentSlipUrl,
         status: 'pending',

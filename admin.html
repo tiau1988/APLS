@@ -385,24 +385,30 @@
 
         // Login Form Handler
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Admin page initialized');
             const loginForm = document.getElementById('loginForm');
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const password = document.getElementById('password').value;
+                console.log('Login attempt with password:', password);
                 
                 if (login(password)) {
+                    console.log('Login successful');
                     document.getElementById('password').value = '';
                 } else {
+                    console.log('Login failed');
                     showLoginError('Invalid password. Please try again.');
                     document.getElementById('password').value = '';
                 }
             });
 
             // Check authentication on page load
+            console.log('Checking authentication...');
             checkAuthentication();
         });
 
         async function loadRegistrations() {
+            console.log('Loading registrations...');
             try {
                 // Add authentication header
                 const headers = {
@@ -410,17 +416,23 @@
                     'X-Admin-Token': ADMIN_PASSWORD
                 };
                 
-                const response = await fetch('/netlify/functions/admin-registrations-neon', {
+                console.log('Making API call to admin-registrations-neon...');
+                const response = await fetch('/.netlify/functions/admin-registrations-neon', {
                     method: 'GET',
                     headers: headers
                 });
+                
+                console.log('Response status:', response.status);
                 const data = await response.json();
+                console.log('Response data:', data);
 
                 if (data.success) {
+                    console.log('Data loaded successfully, registrations count:', data.registrations.length);
                     registrationsData = data.registrations;
                     updateStats(data.statistics);
                     updateTable(data.registrations);
                 } else {
+                    console.error('API returned error:', data.error);
                     showError('Failed to load registrations: ' + data.error);
                 }
             } catch (error) {
