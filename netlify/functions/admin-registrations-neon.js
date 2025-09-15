@@ -251,15 +251,19 @@ exports.handler = async (event, context) => {
   }
   
   try {
-    // Get admin credentials from query parameters or headers
+    // Get admin credentials from query parameters, headers, or X-Admin-Token
     const { email, password } = event.queryStringParameters || {};
     const authHeader = event.headers.authorization || event.headers.Authorization;
+    const adminToken = event.headers['x-admin-token'] || event.headers['X-Admin-Token'];
     
     let adminEmail = email;
     let adminPassword = password;
     
-    // Try to extract credentials from Authorization header if not in query params
-    if (!adminEmail && !adminPassword && authHeader) {
+    // Check X-Admin-Token header first (used by admin.html)
+    if (adminToken && adminToken === ADMIN_PASSWORD) {
+      // Valid admin token, proceed without further authentication
+    } else if (!adminEmail && !adminPassword && authHeader) {
+      // Try to extract credentials from Authorization header if not in query params
       try {
         const base64Credentials = authHeader.replace('Basic ', '');
         const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
@@ -271,20 +275,22 @@ exports.handler = async (event, context) => {
       }
     }
     
-    // Verify admin credentials
-    if (!verifyAdminCredentials(adminEmail, adminPassword)) {
-      return {
-        statusCode: 401,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'WWW-Authenticate': 'Basic realm="Admin Access"'
-        },
-        body: JSON.stringify({
-          success: false,
-          error: 'Unauthorized. Invalid admin credentials.'
-        })
-      };
+    // Verify admin credentials (skip if valid admin token was provided)
+    if (!adminToken || adminToken !== ADMIN_PASSWORD) {
+      if (!verifyAdminCredentials(adminEmail, adminPassword)) {
+        return {
+          statusCode: 401,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': 'Basic realm="Admin Access"'
+          },
+          body: JSON.stringify({
+            success: false,
+            error: 'Unauthorized. Invalid admin credentials.'
+          })
+        };
+      }
     }
     
     // Get all registrations and statistics
@@ -304,6 +310,13 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
+        registrations: formattedRegistrations,
+        statistics: {
+          total_registrations: stats.total,
+          total_revenue: formattedRegistrations.reduce((sum, reg) => sum + (reg.totalAmount || 0), 0),
+          early_bird_count: stats.early_bird,
+          standard_count: stats.by_type?.standard || 0
+        },
         data: {
           registrations: formattedRegistrations,
           stats,
