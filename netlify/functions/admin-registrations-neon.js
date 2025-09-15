@@ -180,26 +180,40 @@ async function getRegistrationStats() {
 
 /**
  * Format registration data for admin view
+ * Returns data in snake_case format to match admin.html expectations
  */
 function formatRegistrationData(registrations) {
   return registrations.map(reg => ({
+    // Snake_case format for admin.html compatibility
+    registration_id: reg.registration_id,
+    full_name: `${reg.first_name} ${reg.last_name}`.trim(),
+    email: reg.email,
+    phone: reg.phone,
+    residence_country: reg.residence_country,
+    passport_nric: reg.passport_nric,
+    club_name: reg.club_name,
+    district: reg.district,
+    position: reg.club_position || reg.position,
+    registration_type: reg.registration_type,
+    total_amount: reg.total_amount,
+    payment_slip_url: reg.payment_slip_url,
+    status: reg.status,
+    created_at: reg.created_at,
+    
+    // Additional fields for backward compatibility
     id: reg.registration_id,
     registrationId: reg.registration_id,
     firstName: reg.first_name,
     lastName: reg.last_name,
-    email: reg.email,
-    phone: reg.phone,
     residenceCountry: reg.residence_country,
     passportNric: reg.passport_nric,
     gender: reg.gender,
     address: reg.address,
     clubName: reg.club_name,
-    district: reg.district,
     otherDistrict: reg.other_district,
     ppoasPosition: reg.ppoas_position,
     districtCabinetPosition: reg.district_cabinet_position,
     clubPosition: reg.club_position,
-    position: reg.position,
     positionInNgo: reg.position_in_ngo,
     otherNgos: reg.other_ngos,
     registrationType: reg.registration_type,
@@ -212,9 +226,7 @@ function formatRegistrationData(registrations) {
     privacyPolicy: reg.privacy_policy,
     totalAmount: reg.total_amount,
     paymentSlipUrl: reg.payment_slip_url,
-    status: reg.status,
     createdAt: reg.created_at,
-    // Additional computed fields
     fullName: `${reg.first_name} ${reg.last_name}`.trim(),
     hasPaymentSlip: !!reg.payment_slip_url,
     registrationDate: new Date(reg.created_at).toLocaleDateString(),
