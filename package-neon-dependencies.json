@@ -1,0 +1,128 @@
+{
+  "name": "aplls-2026-website-neon",
+  "version": "1.0.0",
+  "description": "APLLS 2026 Website with Neon Database Integration",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "npm run build:functions",
+    "build:functions": "netlify-lambda build netlify/functions",
+    "serve": "netlify-lambda serve netlify/functions",
+    "migrate:data": "node data-migration-script.js",
+    "migrate:schema": "echo 'Run neon-schema-migration.sql in your Neon database console'",
+    "test:neon": "node test-neon-connection.js",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "cloudinary": "^1.41.0",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "netlify-lambda": "^2.0.16",
+    "@types/node": "^20.8.0",
+    "@types/pg": "^8.10.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "your-repository-url"
+  },
+  "keywords": [
+    "aplls",
+    "lions",
+    "registration",
+    "neon",
+    "netlify",
+    "serverless"
+  ],
+  "author": "APLLS 2026 Team",
+  "license": "MIT",
+  "netlify": {
+    "functions": {
+      "directory": "netlify/functions",
+      "node_bundler": "esbuild"
+    }
+  },
+  "_migration_notes": {
+    "new_dependencies": {
+      "@neondatabase/serverless": "Primary Neon database client for serverless environments",
+      "cloudinary": "File storage service (replaces Supabase storage)",
+      "pg": "PostgreSQL client (alternative to Neon serverless client)",
+      "ws": "WebSocket support for Neon connections"
+    },
+    "kept_dependencies": {
+      "@supabase/supabase-js": "Keep during migration period for data transfer",
+      "multer": "File upload handling",
+      "uuid": "Unique ID generation",
+      "cors": "Cross-origin resource sharing",
+      "dotenv": "Environment variable management"
+    },
+    "installation_commands": [
+      "npm install @neondatabase/serverless",
+      "npm install cloudinary",
+      "npm install pg",
+      "npm install ws",
+      "npm install --save-dev @types/pg"
+    ],
+    "removal_after_migration": [
+      "@supabase/supabase-js (after successful migration and testing)"
+    ]
+  },
+  "_environment_variables_required": {
+    "neon": {
+      "NEON_DATABASE_URL": "postgresql://username:password@host/database?sslmode=require",
+      "NEON_HOST": "your-neon-host.neon.tech",
+      "NEON_DATABASE": "your-database-name",
+      "NEON_USERNAME": "your-username",
+      "NEON_PASSWORD": "your-password",
+      "NEON_SSL": "require"
+    },
+    "file_storage": {
+      "CLOUDINARY_CLOUD_NAME": "your-cloudinary-cloud-name",
+      "CLOUDINARY_API_KEY": "your-cloudinary-api-key",
+      "CLOUDINARY_API_SECRET": "your-cloudinary-api-secret"
+    },
+    "application": {
+      "ADMIN_PASSWORD": "your-admin-password",
+      "CORS_ORIGIN": "https://your-domain.com",
+      "NODE_ENV": "production"
+    },
+    "legacy_supabase": {
+      "SUPABASE_URL": "keep-during-migration",
+      "SUPABASE_ANON_KEY": "keep-during-migration",
+      "SUPABASE_SERVICE_ROLE_KEY": "keep-during-migration"
+    }
+  },
+  "_migration_checklist": {
+    "pre_migration": [
+      "✓ Backup existing Supabase data",
+      "✓ Set up Neon database",
+      "✓ Install new dependencies",
+      "✓ Set up Cloudinary account",
+      "✓ Configure environment variables"
+    ],
+    "migration": [
+      "□ Run schema migration in Neon",
+      "□ Test Neon connection",
+      "□ Run data migration script",
+      "□ Update Netlify functions",
+      "□ Test all endpoints"
+    ],
+    "post_migration": [
+      "□ Update frontend API calls if needed",
+      "□ Test complete user flow",
+      "□ Monitor for errors",
+      "□ Remove Supabase dependencies",
+      "□ Update documentation"
+    ]
+  }
+}
