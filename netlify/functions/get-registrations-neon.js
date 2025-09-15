@@ -53,20 +53,25 @@ async function getPublicRegistrations() {
  * Format registration data for public view (privacy-filtered)
  */
 function formatPublicRegistrationData(registrations) {
-  return registrations.map(reg => ({
-    id: reg.registration_id,
-    registrationId: reg.registration_id,
-    firstName: reg.first_name,
-    lastName: reg.last_name ? reg.last_name.charAt(0) + '.' : '', // Only show first letter of last name
-    clubName: reg.club_name,
-    district: reg.district,
-    registrationType: reg.registration_type,
-    status: reg.status,
-    registrationDate: new Date(reg.created_at).toLocaleDateString(),
-    // Computed fields
-    displayName: `${reg.first_name} ${reg.last_name ? reg.last_name.charAt(0) + '.' : ''}`.trim(),
-    isEarlyBird: reg.registration_type === 'early_bird'
-  }));
+  return registrations.map(reg => {
+    const displayName = `${reg.first_name} ${reg.last_name ? reg.last_name.charAt(0) + '.' : ''}`.trim();
+    return {
+      id: reg.registration_id,
+      registrationId: reg.registration_id,
+      firstName: reg.first_name,
+      lastName: reg.last_name ? reg.last_name.charAt(0) + '.' : '', // Only show first letter of last name
+      name: displayName, // Add name field for compatibility with registrations.html
+      clubName: reg.club_name,
+      club_name: reg.club_name, // Add snake_case version for compatibility
+      district: reg.district,
+      registrationType: reg.registration_type,
+      status: reg.status,
+      registrationDate: new Date(reg.created_at).toLocaleDateString(),
+      // Computed fields
+      displayName: displayName,
+      isEarlyBird: reg.registration_type === 'early_bird'
+    };
+  });
 }
 
 /**
@@ -119,14 +124,12 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        data: {
-          registrations: validRegistrations,
-          meta: {
-            total_count: validRegistrations.length,
-            last_updated: new Date().toISOString(),
-            database: 'Neon PostgreSQL',
-            note: 'This is filtered public data. Personal information is protected.'
-          }
+        registrations: validRegistrations,
+        meta: {
+          total_count: validRegistrations.length,
+          last_updated: new Date().toISOString(),
+          database: 'Neon PostgreSQL',
+          note: 'This is filtered public data. Personal information is protected.'
         }
       })
     };

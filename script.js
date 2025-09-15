@@ -532,6 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Transform data to match API structure
                 const registrationData = {
+                    fullName: rawData.fullName, // Required by backend
                     firstName,
                     lastName,
                     email: rawData.email,
