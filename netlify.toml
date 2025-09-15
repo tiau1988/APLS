@@ -2,6 +2,9 @@
   publish = "."
   command = "echo 'Static site build complete'"
 
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
 [functions]
   directory = "netlify/functions"
 
