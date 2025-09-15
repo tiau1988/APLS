@@ -4,7 +4,10 @@
   "description": "Netlify Functions for APLLS 2026",
   "type": "commonjs",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
     "@supabase/supabase-js": "^2.54.0",
+    "cloudinary": "^2.5.1",
+    "lambda-multipart-parser": "^1.0.1",
     "uuid": "^11.1.0"
   }
 }
