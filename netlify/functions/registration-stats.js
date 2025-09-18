@@ -1,8 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 exports.handler = async (event, context) => {
   // Set CORS headers
@@ -32,31 +33,29 @@ exports.handler = async (event, context) => {
 
   try {
     // Get total registrations count
-    const { count: totalCount, error: totalError } = await supabase
+    const { count: totalRegistrations, error: totalError } = await supabase
       .from('registrations')
       .select('*', { count: 'exact', head: true });
-
+    
     if (totalError) {
-      console.error('Error fetching total count:', totalError);
       throw totalError;
     }
 
-    // Get early bird registrations count (registration_type = 'early-bird')
-    const { count: earlyBirdCount, error: earlyBirdError } = await supabase
+    // Get early bird registrations count (before March 1, 2025)
+    const { count: earlyBirdRegistrations, error: earlyBirdError } = await supabase
       .from('registrations')
       .select('*', { count: 'exact', head: true })
-      .eq('registration_type', 'early-bird');
-
+      .lt('created_at', '2025-03-01T00:00:00.000Z');
+    
     if (earlyBirdError) {
-      console.error('Error fetching early bird count:', earlyBirdError);
       throw earlyBirdError;
     }
 
     const stats = {
-      totalCount: totalCount || 0,
-      earlyBirdCount: earlyBirdCount || 0,
+      totalCount: totalRegistrations || 0,
+      earlyBirdCount: earlyBirdRegistrations || 0,
       earlyBirdLimit: 150, // Set your early bird limit here
-      earlyBirdRemaining: Math.max(0, 150 - (earlyBirdCount || 0))
+      earlyBirdRemaining: Math.max(0, 150 - (earlyBirdRegistrations || 0))
     };
 
     return {

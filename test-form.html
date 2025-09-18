@@ -143,8 +143,8 @@
         async function submitRegistration(data) {
             debug('Starting submitRegistration function');
             try {
-                debug('Sending fetch request to /.netlify/functions/register-neon');
-                const response = await fetch('/.netlify/functions/register-neon', {
+                debug('Sending fetch request to /.netlify/functions/register');
+                const response = await fetch('/.netlify/functions/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

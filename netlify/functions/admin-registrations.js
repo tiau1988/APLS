@@ -1,7 +1,9 @@
-const { neon } = require('@neondatabase/serverless');
+const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Neon client
-const sql = neon(process.env.NEON_DATABASE_URL);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 exports.handler = async (event, context) => {
   // Set CORS headers
@@ -29,21 +31,15 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Get all registrations from the database
-    const registrations = await sql`
-      SELECT 
-        registration_id,
-        first_name,
-        last_name,
-        email,
-        residence_country,
-        passport_nric,
-        payment_slip_url,
-        created_at,
-        updated_at
-      FROM registrations 
-      ORDER BY created_at DESC
-    `;
+    // Fetch all registrations from Supabase database
+    const { data: registrations, error } = await supabase
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
     
     return {
       statusCode: 200,

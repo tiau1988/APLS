@@ -218,7 +218,7 @@
         // Fetch registrations data
         async function fetchRegistrations() {
             try {
-                const response = await fetch('/.netlify/functions/get-registrations-neon');
+                const response = await fetch('/.netlify/functions/get-registrations');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
