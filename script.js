@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } catch (error) {
                 console.error('Registration error:', error);
-                showFormMessage('发生错误。请稍后再试。', 'error');
+                showFormMessage('Registration failed. If the problem persists, please contact support.', 'error');
             } finally {
                 // Restore button state
                 submitButton.textContent = originalText;

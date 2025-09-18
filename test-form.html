@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Test Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .debug {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registration Test Form</h1>
+    <p>This is a simplified test form to debug the registration issue.</p>
+    
+    <div id="message" class="message"></div>
+    <div id="debug" class="debug"></div>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label for="fullName">Full Name *</label>
+            <input type="text" id="fullName" name="fullName" required value="Test User">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="phone">Phone *</label>
+            <input type="text" id="phone" name="phone" required value="+1234567890">
+        </div>
+        
+        <div class="form-group">
+            <label for="registrationType">Registration Type *</label>
+            <select id="registrationType" name="registrationType" required>
+                <option value="package-1">Package 1 - $350</option>
+                <option value="package-2">Package 2 - $400</option>
+                <option value="early-bird">Early Bird - $300</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="paymentSlip">Payment Slip *</label>
+            <input type="file" id="paymentSlip" name="paymentSlip" accept="image/*,.pdf" required>
+        </div>
+        
+        <button type="submit" id="submitBtn">Submit Registration</button>
+    </form>
+    
+    <script>
+        // Debug function
+        function debug(message) {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            console.log(message);
+        }
+        
+        // Show message function
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+        
+        // Generate registration ID
+        function generateRegistrationId() {
+            const timestamp = Date.now().toString(36);
+            const randomStr = Math.random().toString(36).substr(2, 5);
+            return `APC2026-${timestamp}-${randomStr}`.toUpperCase();
+        }
+        
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        // Submit registration function (copied from main script.js)
+        async function submitRegistration(data) {
+            debug('Starting submitRegistration function');
+            try {
+                debug('Sending fetch request to /.netlify/functions/register-neon');
+                const response = await fetch('/.netlify/functions/register-neon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+        
+                debug(`Response received: status ${response.status}`);
+                const result = await response.json();
+                debug(`Response JSON: ${JSON.stringify(result, null, 2)}`);
+                
+                if (!response.ok) {
+                    debug('Response not ok, handling error cases');
+                    // Handle specific error cases
+                    if (response.status === 409) {
+                        // Duplicate email - return the error directly
+                        return {
+                            success: false,
+                            message: result.message || 'Email already registered. Please use a different email address.',
+                            errorType: 'DUPLICATE_EMAIL'
+                        };
+                    } else if (response.status === 400) {
+                        // Validation error - return the error directly
+                        return {
+                            success: false,
+                            message: result.message || 'Please fill in all required fields correctly.',
+                            errorType: 'VALIDATION_ERROR'
+                        };
+                    } else if (response.status === 500) {
+                        // Server error - provide specific error handling
+                        return {
+                            success: false,
+                            message: result.message || 'Server error occurred. Please try again.',
+                            errorType: result.error || 'SERVER_ERROR',
+                            details: result.details
+                        };
+                    } else {
+                        // Other server errors - throw to trigger fallback
+                        throw new Error(result.message || 'Registration failed');
+                    }
+                }
+        
+                debug('Response ok, processing success');
+                // Success - also save to localStorage as backup
+                const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
+                existingRegistrations.push(data);
+                localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
+                
+                // Handle warnings if present
+                if (result.warnings && result.warnings.length > 0) {
+                    console.warn('Registration completed with warnings:', result.warnings);
+                    result.hasWarnings = true;
+                }
+                
+                debug('Returning success result');
+                return result;
+            } catch (error) {
+                debug(`Catch block: ${error.message}`);
+                console.error('API error, using localStorage fallback...', error);
+                
+                // Check if it's a network error or timeout
+                const isNetworkError = error.name === 'TypeError' || error.message.includes('fetch') || error.message.includes('network');
+                
+                if (isNetworkError) {
+                    debug('Network error detected, using localStorage fallback');
+                    // Only use localStorage fallback for network/server errors, not validation errors
+                    try {
+                        const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
+                        existingRegistrations.push(data);
+                        localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
+                        
+                        return {
+                            success: true,
+                            message: 'Registration saved locally due to network issues. Will sync when connection is restored.',
+                            registrationId: data.registrationId,
+                            fallback: true,
+                            errorType: 'NETWORK_ERROR'
+                        };
+                    } catch (fallbackError) {
+                        console.error('LocalStorage fallback failed:', fallbackError);
+                        return {
+                            success: false,
+                            message: 'Registration failed due to network issues and local storage is unavailable. Please try again.',
+                            errorType: 'STORAGE_ERROR'
+                        };
+                    }
+                } else {
+                    debug('Non-network error, returning failure');
+                    // For other errors, don't use fallback
+                    return {
+                        success: false,
+                        message: error.message || 'Registration failed. Please try again.',
+                        errorType: 'UNKNOWN_ERROR'
+                    };
+                }
+            }
+        }
+        
+        // Form submission handler
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            debug('Form submission started');
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            
+            // Clear previous messages
+            document.getElementById('message').style.display = 'none';
+            document.getElementById('debug').textContent = '';
+            
+            try {
+                // Disable submit button
+                submitBtn.textContent = 'Submitting...';
+                submitBtn.disabled = true;
+                
+                // Get form data
+                const formData = new FormData(this);
+                const fullName = formData.get('fullName');
+                const email = formData.get('email');
+                const phone = formData.get('phone');
+                const registrationType = formData.get('registrationType');
+                const paymentSlipFile = formData.get('paymentSlip');
+                
+                debug(`Form data collected: ${fullName}, ${email}, ${phone}, ${registrationType}`);
+                
+                // Generate unique email for testing
+                const uniqueEmail = `test${Date.now()}@example.com`;
+                debug(`Using unique email: ${uniqueEmail}`);
+                
+                // Convert file to base64
+                debug('Converting file to base64...');
+                const fileData = await fileToBase64(paymentSlipFile);
+                debug(`File converted, size: ${fileData.length} characters`);
+                
+                // Prepare registration data
+                const registrationData = {
+                    registrationId: generateRegistrationId(),
+                    firstName: fullName.split(' ')[0] || fullName,
+                    lastName: fullName.split(' ').slice(1).join(' ') || '',
+                    fullName: fullName,
+                    email: uniqueEmail, // Use unique email
+                    phone: phone,
+                    residenceCountry: 'Malaysia',
+                    passportNric: 'TEST123456',
+                    gender: 'male',
+                    address: '123 Test Street',
+                    clubName: 'Test Lions Club',
+                    district: '308A1',
+                    otherDistrict: '',
+                    ppoasPosition: '',
+                    districtCabinetPosition: '',
+                    clubPosition: 'member',
+                    position: '',
+                    positionInNgo: '',
+                    otherNgos: '',
+                    registrationType: registrationType,
+                    vegetarian: 'no',
+                    poolsideParty: 'yes',
+                    communityService: 'no',
+                    installationBanquet: 'yes',
+                    termsConditions: 'yes',
+                    marketingEmails: 'no',
+                    privacyPolicy: 'yes',
+                    totalAmount: registrationType === 'early-bird' ? 300 : (registrationType === 'package-1' ? 350 : 400),
+                    paymentSlip: {
+                        fileName: paymentSlipFile.name,
+                        fileType: paymentSlipFile.type,
+                        fileSize: paymentSlipFile.size,
+                        fileData: fileData
+                    }
+                };
+                
+                debug(`Registration data prepared: ${JSON.stringify(registrationData, null, 2)}`);
+                
+                // Submit registration
+                debug('Calling submitRegistration function...');
+                const response = await submitRegistration(registrationData);
+                
+                debug(`submitRegistration returned: ${JSON.stringify(response, null, 2)}`);
+                
+                if (response.success) {
+                    let message = 'Registration successful! We will contact you soon.';
+                    
+                    if (response.hasWarnings && response.warnings) {
+                        message += '\n\nWarnings:';
+                        response.warnings.forEach(warning => {
+                            message += `\n• ${warning}`;
+                        });
+                    }
+                    
+                    if (response.fallback) {
+                        message += '\n\nNote: Registration was saved locally and will sync when the server is available.';
+                    }
+                    
+                    showMessage(message, 'success');
+                    this.reset();
+                } else {
+                    let errorMessage = response.message || 'Registration failed. Please try again.';
+                    
+                    switch (response.errorType) {
+                        case 'DUPLICATE_EMAIL':
+                            errorMessage += '\n\nPlease use a different email address or contact support if you believe this is an error.';
+                            break;
+                        case 'VALIDATION_ERROR':
+                            errorMessage += '\n\nPlease check all required fields and ensure they are filled correctly.';
+                            break;
+                        case 'UPLOAD_ERROR':
+                            errorMessage += '\n\nThere was an issue uploading your payment slip. Please try with a different image file (JPG, PNG, or PDF under 5MB).';
+                            break;
+                        case 'DATABASE_ERROR':
+                            errorMessage += '\n\nThere was a database issue. Please try again in a few moments.';
+                            break;
+                        case 'NETWORK_ERROR':
+                            errorMessage += '\n\nPlease check your internet connection and try again.';
+                            break;
+                        case 'STORAGE_ERROR':
+                            errorMessage += '\n\nLocal storage is not available. Please ensure your browser allows local storage and try again.';
+                            break;
+                        default:
+                            errorMessage += '\n\nIf the problem persists, please contact support.';
+                    }
+                    
+                    if (response.details) {
+                        console.error('Registration error details:', response.details);
+                    }
+                    
+                    showMessage(errorMessage, 'error');
+                }
+                
+            } catch (error) {
+                debug(`Form submission error: ${error.message}`);
+                console.error('Registration error:', error);
+                showMessage('Registration failed. If the problem persists, please contact support.', 'error');
+            } finally {
+                // Restore button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Set unique email on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').value = `test${Date.now()}@example.com`;
+        });
+    </script>
+</body>
+</html>
