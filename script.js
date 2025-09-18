@@ -613,27 +613,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Submit registration data
-                console.log('Submitting registration data:', registrationData);
+                const result = await submitRegistration(registrationData);
                 
-                const response = await submitRegistration(registrationData);
-                
-                if (response.success) {
+                if (result.success) {
                     let message = 'Registration successful! We will contact you soon.';
                     
                     // Handle warnings if present
-                    if (response.hasWarnings && response.warnings) {
+                    if (result.hasWarnings && result.warnings) {
                         message += '\n\nWarnings:';
-                        response.warnings.forEach(warning => {
+                        result.warnings.forEach(warning => {
                             message += `\n• ${warning}`;
                         });
                     }
                     
                     // Handle fallback mode
-                    if (response.fallback) {
+                    if (result.fallback) {
                         message += '\n\nNote: Registration was saved locally and will sync when the server is available.';
                     }
                     
-                    showFormMessage(message, response.hasWarnings ? 'warning' : 'success');
+                    showFormMessage(message, result.hasWarnings ? 'warning' : 'success');
                     registrationForm.reset();
                     updateTotalAmount(); // Reset the total calculation
                     
@@ -654,10 +652,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         uploadStatus.className = '';
                     }
                 } else {
-                    let errorMessage = response.message || 'Registration failed. Please try again.';
+                    let errorMessage = result.message || 'Registration failed. Please try again.';
                     
                     // Add specific guidance based on error type
-                    switch (response.errorType) {
+                    switch (result.errorType) {
                         case 'DUPLICATE_EMAIL':
                             errorMessage += '\n\nPlease use a different email address or contact support if you believe this is an error.';
                             break;
@@ -681,8 +679,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Add details if available
-                    if (response.details) {
-                        console.error('Registration error details:', response.details);
+                    if (result.details) {
+                        console.error('Registration error details:', result.details);
                     }
                     
                     showFormMessage(errorMessage, 'error');
@@ -753,7 +751,7 @@ async function submitRegistration(data) {
             },
             body: JSON.stringify(data)
         });
-
+        
         const result = await response.json();
         
         if (!response.ok) {
