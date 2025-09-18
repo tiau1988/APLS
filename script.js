@@ -613,7 +613,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Submit registration data
+                console.log('Submitting registration data:', registrationData);
                 const result = await submitRegistration(registrationData);
+                console.log('Registration result:', result);
                 
                 if (result.success) {
                     let message = 'Registration successful! We will contact you soon.';
@@ -753,6 +755,8 @@ async function submitRegistration(data) {
         });
         
         const result = await response.json();
+        console.log('API Response status:', response.status);
+        console.log('API Response result:', result);
         
         if (!response.ok) {
             // Handle specific error cases
