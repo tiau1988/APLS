@@ -82,16 +82,40 @@ async function uploadToLocalStorage(fileBuffer, fileName, registrationId) {
  */
 async function uploadFile(fileBuffer, fileName, registrationId) {
   // Check if Cloudinary is properly configured
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+  
   const isCloudinaryConfigured = 
-    process.env.CLOUDINARY_CLOUD_NAME && 
-    process.env.CLOUDINARY_API_KEY && 
-    process.env.CLOUDINARY_API_SECRET &&
-    process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name' &&
-    process.env.CLOUDINARY_API_KEY !== 'your_api_key' &&
-    process.env.CLOUDINARY_API_SECRET !== 'your_api_secret';
+    cloudName && 
+    apiKey && 
+    apiSecret &&
+    cloudName !== 'your_cloud_name' &&
+    apiKey !== 'your_api_key' &&
+    apiSecret !== 'your_api_secret' &&
+    cloudName.length > 0 &&
+    apiKey.length > 0 &&
+    apiSecret.length > 0;
+  
+  console.log('Cloudinary configuration check:', {
+    cloud_name: cloudName ? 'configured' : 'missing',
+    api_key: apiKey ? 'configured' : 'missing',
+    api_secret: apiSecret ? 'configured' : 'missing',
+    is_configured: isCloudinaryConfigured
+  });
+  
+  // Update Cloudinary config with cleaned values
+  if (isCloudinaryConfigured) {
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret
+    });
+  }
   
   if (isCloudinaryConfigured) {
     try {
+      console.log('Uploading to Cloudinary...');
       const result = await new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           {
@@ -106,6 +130,7 @@ async function uploadFile(fileBuffer, fileName, registrationId) {
         ).end(fileBuffer);
       });
       
+      console.log('Cloudinary upload successful:', result.secure_url);
       return result.secure_url;
     } catch (error) {
       console.error('Cloudinary upload error, falling back to local storage:', error);
@@ -269,10 +294,31 @@ export const handler = async (event, context) => {
         const jsonData = JSON.parse(event.body);
         fields = jsonData;
       } else if (contentType.includes('multipart/form-data')) {
-        // Parse multipart form data
-        const result = await multipart.parse(event);
-        fields = result.fields;
-        files = result.files;
+        // Parse multipart form data with error handling
+        try {
+          const result = await multipart.parse(event);
+          fields = result.fields || {};
+          files = result.files || [];
+        } catch (multipartError) {
+          console.error('Multipart parsing error:', multipartError);
+          // Try to parse as JSON if multipart fails
+          try {
+            const jsonData = JSON.parse(event.body);
+            fields = jsonData;
+          } catch (jsonError) {
+            return {
+              statusCode: 400,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                success: false,
+                error: 'Failed to parse request data. Please try again.'
+              })
+            };
+          }
+        }
       } else {
         // Try to parse as JSON by default
         try {
