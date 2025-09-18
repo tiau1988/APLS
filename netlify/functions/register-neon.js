@@ -284,6 +284,8 @@ exports.handler = async (event, context) => {
       
       // Handle file upload if present
       let paymentSlipUrl = null;
+      
+      // Check for file in multipart form data
       if (files && files.length > 0) {
         const paymentSlipFile = files.find(file => file.fieldname === 'paymentSlip');
         if (paymentSlipFile) {
@@ -291,6 +293,22 @@ exports.handler = async (event, context) => {
             paymentSlipFile.content,
             paymentSlipFile.filename
           );
+        }
+      }
+      // Check for file in JSON data (base64 format)
+      else if (fields.paymentSlip && fields.paymentSlip.fileData) {
+        try {
+          // Convert base64 data URL to buffer
+          const base64Data = fields.paymentSlip.fileData.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+          const fileBuffer = Buffer.from(base64Data, 'base64');
+          
+          paymentSlipUrl = await uploadToCloudinary(
+            fileBuffer,
+            fields.paymentSlip.fileName || 'payment-slip'
+          );
+        } catch (uploadError) {
+          console.error('Error uploading payment slip from JSON:', uploadError);
+          // Continue with registration even if file upload fails
         }
       }
       

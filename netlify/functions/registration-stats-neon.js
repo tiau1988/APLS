@@ -31,27 +31,27 @@ const TOTAL_CAPACITY = 500;   // Maximum total registrations
  */
 async function getRegistrationStats() {
   try {
-    // Get total registrations (excluding cancelled)
+    // Get total registrations
     const totalResult = await sql`
       SELECT COUNT(*) as count 
       FROM registrations 
-      WHERE status != 'cancelled'
+      WHERE status != 'cancelled' OR status IS NULL
     `;
     
     // Get early bird registrations
     const earlyBirdResult = await sql`
       SELECT COUNT(*) as count 
       FROM registrations 
-      WHERE registration_type = 'early_bird' 
-      AND status != 'cancelled'
+      WHERE registration_type IN ('early-bird', 'early_bird', 'early bird', 'earlybird') 
+      AND (status != 'cancelled' OR status IS NULL)
     `;
     
     // Get regular registrations
     const regularResult = await sql`
       SELECT COUNT(*) as count 
       FROM registrations 
-      WHERE registration_type = 'regular' 
-      AND status != 'cancelled'
+      WHERE registration_type IN ('standard', 'regular', 'late', '260', '390') 
+      AND (status != 'cancelled' OR status IS NULL)
     `;
     
     // Get registrations by status
@@ -68,7 +68,7 @@ async function getRegistrationStats() {
       SELECT COUNT(*) as count 
       FROM registrations 
       WHERE created_at >= NOW() - INTERVAL '24 hours'
-      AND status != 'cancelled'
+      AND (status != 'cancelled' OR status IS NULL)
     `;
     
     // Get registrations by district (top 10)
@@ -91,7 +91,7 @@ async function getRegistrationStats() {
       FROM registrations 
       WHERE payment_slip_url IS NOT NULL 
       AND payment_slip_url != ''
-      AND status != 'cancelled'
+      AND (status != 'cancelled' OR status IS NULL)
     `;
     
     // Parse results
@@ -167,14 +167,14 @@ async function getSimpleStats() {
     const totalResult = await sql`
       SELECT COUNT(*) as count 
       FROM registrations 
-      WHERE status != 'cancelled'
+      WHERE status != 'cancelled' OR status IS NULL
     `;
     
     const earlyBirdResult = await sql`
       SELECT COUNT(*) as count 
       FROM registrations 
-      WHERE registration_type = 'early_bird' 
-      AND status != 'cancelled'
+      WHERE registration_type IN ('early-bird', 'early_bird', 'early bird', 'earlybird') 
+      AND (status != 'cancelled' OR status IS NULL)
     `;
     
     const total = parseInt(totalResult[0].count);

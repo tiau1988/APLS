@@ -199,54 +199,81 @@ function updatePricingOptions() {
     if (!registrationSelect) return;
     
     const currentDate = new Date();
-    const earlyBirdEnd = new Date('2025-08-14T23:59:59');
-    const standardEnd = new Date('2025-12-31T23:59:59');
-    const lateEnd = new Date('2026-05-31T23:59:59');
+    const package1End = new Date('2025-11-30T23:59:59'); // Package 1: 15 Aug 2025 - 30 Nov 2025
+    const package2End = new Date('2026-02-28T23:59:59'); // Package 2: 1 Dec 2025 - 28 Feb 2026
+    const package3End = new Date('2026-05-31T23:59:59'); // Package 3: 1 Mar 2026 - 31 May 2026
     
     // Get all options
-    const earlyBirdOption = registrationSelect.querySelector('option[value="early-bird"]');
-    const standardOption = registrationSelect.querySelector('option[value="standard"]');
-    const lateOption = registrationSelect.querySelector('option[value="late"]');
+    const package1Option = registrationSelect.querySelector('option[value="package-1"]');
+    const package2Option = registrationSelect.querySelector('option[value="package-2"]');
+    const package3Option = registrationSelect.querySelector('option[value="package-3"]');
     
     // Reset all options to visible
-    if (earlyBirdOption) earlyBirdOption.style.display = 'block';
-    if (standardOption) standardOption.style.display = 'block';
-    if (lateOption) lateOption.style.display = 'block';
+    if (package1Option) package1Option.style.display = 'block';
+    if (package2Option) package2Option.style.display = 'block';
+    if (package3Option) package3Option.style.display = 'block';
     
-    // Hide options based on current date
-    if (currentDate > earlyBirdEnd) {
-        // After August 14, 2025 - hide early bird
-        if (earlyBirdOption) {
-            earlyBirdOption.style.display = 'none';
-            // If early bird is currently selected, reset selection
-            if (registrationSelect.value === 'early-bird') {
-                registrationSelect.value = '';
-            }
+    // Auto-select and hide options based on current date
+    if (currentDate <= package1End) {
+        // Current period: Package 1 (15 Aug 2025 - 30 Nov 2025)
+        if (package1Option && !registrationSelect.value) {
+            registrationSelect.value = 'package-1';
         }
-    }
-    
-    if (currentDate > standardEnd) {
-        // After December 31, 2025 - hide standard, only show late
-        if (standardOption) {
-            standardOption.style.display = 'none';
-            if (registrationSelect.value === 'standard') {
-                registrationSelect.value = '';
-            }
+        // Hide future packages
+        if (package2Option) package2Option.style.display = 'none';
+        if (package3Option) package3Option.style.display = 'none';
+    } else if (currentDate <= package2End) {
+        // Current period: Package 2 (1 Dec 2025 - 28 Feb 2026)
+        if (package2Option && !registrationSelect.value) {
+            registrationSelect.value = 'package-2';
         }
-    }
-    
-    if (currentDate > lateEnd) {
-        // After May 31, 2026 - hide late registration
-        if (lateOption) {
-            lateOption.style.display = 'none';
-            if (registrationSelect.value === 'late') {
-                registrationSelect.value = '';
-            }
+        // Hide past and future packages
+        if (package1Option) package1Option.style.display = 'none';
+        if (package3Option) package3Option.style.display = 'none';
+        // Reset if package-1 was selected
+        if (registrationSelect.value === 'package-1') {
+            registrationSelect.value = 'package-2';
         }
+    } else if (currentDate <= package3End) {
+        // Current period: Package 3 (1 Mar 2026 - 31 May 2026)
+        if (package3Option && !registrationSelect.value) {
+            registrationSelect.value = 'package-3';
+        }
+        // Hide past packages
+        if (package1Option) package1Option.style.display = 'none';
+        if (package2Option) package2Option.style.display = 'none';
+        // Reset if previous package was selected
+        if (registrationSelect.value === 'package-1' || registrationSelect.value === 'package-2') {
+            registrationSelect.value = 'package-3';
+        }
+    } else {
+        // After May 31, 2026 - hide all registration options
+        if (package1Option) package1Option.style.display = 'none';
+        if (package2Option) package2Option.style.display = 'none';
+        if (package3Option) package3Option.style.display = 'none';
+        registrationSelect.value = '';
     }
     
     // Update total amount after option changes
     updateTotalAmount();
+}
+
+// Currency conversion rates (base: RM)
+const currencyRates = {
+    'RM': 1,
+    'USD': 0.23, // 1 RM = 0.23 USD (approximate)
+    'RMB': 1.67  // 1 RM = 1.67 RMB (approximate)
+};
+
+// Convert price from RM to selected currency
+function convertCurrency(rmPrice, targetCurrency) {
+    if (targetCurrency === 'RM') return rmPrice;
+    return Math.round(rmPrice * currencyRates[targetCurrency]);
+}
+
+// Format currency display
+function formatCurrency(amount, currency) {
+    return `${currency}${amount}`;
 }
 
 // Update total amount calculation
@@ -256,27 +283,31 @@ function updateTotalAmount() {
     const optionalFeeElement = document.getElementById('optional-fee');
     const totalAmountElement = document.getElementById('total-amount');
     const optionalBreakdown = document.getElementById('optional-breakdown');
+    const currencySelect = document.getElementById('currency-select');
     
-    // Get registration fee
-    let registrationFee = 0;
+    // Get selected currency
+    const selectedCurrency = currencySelect ? currencySelect.value : 'RM';
+    
+    // Get registration fee (in RM)
+    let registrationFeeRM = 0;
     let registrationText = 'Not Selected';
     
     if (registrationSelect && registrationSelect.value && registrationSelect.value !== '') {
         const registrationPrices = {
-            'early-bird': { price: 260, text: 'Early Bird' },
-            'standard': { price: 390, text: 'Standard' },
-            'late': { price: 430, text: 'Late' }
+            'package-1': { price: 390, text: 'Package 1 (RM390/USD90/RMB650)' },
+            'package-2': { price: 430, text: 'Package 2 (RM430/USD115/RMB720)' },
+            'package-3': { price: 480, text: 'Package 3 (RM480/USD130/RMB800)' }
         };
         
         const selectedPackage = registrationPrices[registrationSelect.value];
         if (selectedPackage) {
-            registrationFee = selectedPackage.price;
+            registrationFeeRM = selectedPackage.price;
             registrationText = selectedPackage.text;
         }
     }
     
-    // Get optional programs fee
-    let optionalFee = 0;
+    // Get optional programs fee (in RM)
+    let optionalFeeRM = 0;
     const optionalPrograms = [
         document.getElementById('poolsideParty'),
         document.getElementById('communityService'),
@@ -287,17 +318,22 @@ function updateTotalAmount() {
         if (select && select.value && select.value !== '') {
             const selectedOption = select.options[select.selectedIndex];
             const price = parseInt(selectedOption.getAttribute('data-price')) || 0;
-            optionalFee += price;
+            optionalFeeRM += price;
         }
     });
     
+    // Convert to selected currency
+    const registrationFee = convertCurrency(registrationFeeRM, selectedCurrency);
+    const optionalFee = convertCurrency(optionalFeeRM, selectedCurrency);
+    const total = registrationFee + optionalFee;
+    
     // Update display
     if (registrationFeeElement) {
-        registrationFeeElement.textContent = `RM${registrationFee}`;
+        registrationFeeElement.textContent = formatCurrency(registrationFee, selectedCurrency);
     }
     
     if (optionalFeeElement) {
-        optionalFeeElement.textContent = `RM${optionalFee}`;
+        optionalFeeElement.textContent = formatCurrency(optionalFee, selectedCurrency);
     }
     
     if (optionalBreakdown) {
@@ -305,12 +341,11 @@ function updateTotalAmount() {
     }
     
     if (totalAmountElement) {
-        const total = registrationFee + optionalFee;
-        totalAmountElement.textContent = `RM${total}`;
+        totalAmountElement.textContent = formatCurrency(total, selectedCurrency);
     }
     
     // Debug logging
-    console.log('Registration Fee:', registrationFee, 'Optional Fee:', optionalFee, 'Total:', registrationFee + optionalFee);
+    console.log('Registration Fee:', registrationFee, 'Optional Fee:', optionalFee, 'Total:', total, 'Currency:', selectedCurrency);
 }
 
 // Function to toggle other district field
@@ -334,25 +369,30 @@ async function fetchRegistrationCounts() {
     try {
         const response = await fetch('/.netlify/functions/registration-stats-neon');
         if (response.ok) {
-            const data = await response.json();
-            // Transform the API response to match expected format
-            const transformedData = {
-                counts: {
-                    total: data.totalCount || 0,
-                    earlyBird: data.earlyBirdCount || 0,
-                    recent24h: data.recentCount || 0
-                },
-                earlyBird: {
-                    available: (data.earlyBirdCount || 0) < (data.earlyBirdLimit || 100),
-                    remaining: data.earlyBirdRemaining || 0,
-                    percentage: Math.round(((data.earlyBirdCount || 0) / (data.earlyBirdLimit || 100)) * 100)
-                }
-            };
-            updateCounterDisplay(transformedData);
-            return transformedData;
+            const result = await response.json();
+            if (result.success && result.data) {
+                const data = result.data;
+                // Transform the API response to match expected format
+                const transformedData = {
+                    counts: {
+                        total: data.total || 0,
+                        earlyBird: data.early_bird || 0,
+                        recent24h: data.recent_24h || 0
+                    },
+                    earlyBird: {
+                        available: data.early_bird_available || false,
+                        remaining: data.early_bird_remaining || 0,
+                        percentage: Math.round(((data.early_bird || 0) / (data.early_bird_limit || 100)) * 100)
+                    }
+                };
+                console.log('Registration stats loaded:', transformedData);
+                updateCounterDisplay(transformedData);
+                return transformedData;
+            }
         }
     } catch (error) {
-        console.log('Registration stats API not available, using demo data...');
+        console.error('Registration stats API error:', error);
+        console.log('Using demo data as fallback...');
         
         // Fallback to demo data
         const fallbackData = {
@@ -427,6 +467,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Registration type changed:', this.value);
             updateTotalAmount();
         });
+    }
+    
+    // Add event listener to currency select
+    const currencySelect = document.getElementById('currency-select');
+    if (currencySelect) {
+        currencySelect.addEventListener('change', updateTotalAmount);
     }
     
     // Form Validation and Submission
@@ -516,9 +562,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Calculate total amount
                 const registrationPrices = {
-                    'early-bird': 260,
-                    'standard': 390,
-                    'late': 430
+                    'package-1': 390,
+                    'package-2': 430,
+                    'package-3': 480
                 };
                 const basePrice = registrationPrices[rawData.registrationType] || 0;
                 
