@@ -618,7 +618,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const response = await submitRegistration(registrationData);
                 
                 if (response.success) {
-                    showFormMessage('Registration successful! We will contact you soon.', 'success');
+                    let message = 'Registration successful! We will contact you soon.';
+                    
+                    // Handle warnings if present
+                    if (response.hasWarnings && response.warnings) {
+                        message += '\n\nWarnings:';
+                        response.warnings.forEach(warning => {
+                            message += `\n• ${warning}`;
+                        });
+                    }
+                    
+                    // Handle fallback mode
+                    if (response.fallback) {
+                        message += '\n\nNote: Registration was saved locally and will sync when the server is available.';
+                    }
+                    
+                    showFormMessage(message, response.hasWarnings ? 'warning' : 'success');
                     registrationForm.reset();
                     updateTotalAmount(); // Reset the total calculation
                     
@@ -639,8 +654,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         uploadStatus.className = '';
                     }
                 } else {
-                    // Show the specific error message from the backend
-                    showFormMessage(response.message || 'Registration failed. Please try again.', 'error');
+                    let errorMessage = response.message || 'Registration failed. Please try again.';
+                    
+                    // Add specific guidance based on error type
+                    switch (response.errorType) {
+                        case 'DUPLICATE_EMAIL':
+                            errorMessage += '\n\nPlease use a different email address or contact support if you believe this is an error.';
+                            break;
+                        case 'VALIDATION_ERROR':
+                            errorMessage += '\n\nPlease check all required fields and ensure they are filled correctly.';
+                            break;
+                        case 'UPLOAD_ERROR':
+                            errorMessage += '\n\nThere was an issue uploading your payment slip. Please try with a different image file (JPG, PNG, or PDF under 5MB).';
+                            break;
+                        case 'DATABASE_ERROR':
+                            errorMessage += '\n\nThere was a database issue. Please try again in a few moments.';
+                            break;
+                        case 'NETWORK_ERROR':
+                            errorMessage += '\n\nPlease check your internet connection and try again.';
+                            break;
+                        case 'STORAGE_ERROR':
+                            errorMessage += '\n\nLocal storage is not available. Please ensure your browser allows local storage and try again.';
+                            break;
+                        default:
+                            errorMessage += '\n\nIf the problem persists, please contact support.';
+                    }
+                    
+                    // Add details if available
+                    if (response.details) {
+                        console.error('Registration error details:', response.details);
+                    }
+                    
+                    showFormMessage(errorMessage, 'error');
                 }
                 
             } catch (error) {
@@ -717,13 +762,23 @@ async function submitRegistration(data) {
                 // Duplicate email - return the error directly
                 return {
                     success: false,
-                    message: result.message || 'Email already registered. Please use a different email address.'
+                    message: result.message || 'Email already registered. Please use a different email address.',
+                    errorType: 'DUPLICATE_EMAIL'
                 };
             } else if (response.status === 400) {
                 // Validation error - return the error directly
                 return {
                     success: false,
-                    message: result.message || 'Please fill in all required fields correctly.'
+                    message: result.message || 'Please fill in all required fields correctly.',
+                    errorType: 'VALIDATION_ERROR'
+                };
+            } else if (response.status === 500) {
+                // Server error - provide specific error handling
+                return {
+                    success: false,
+                    message: result.message || 'Server error occurred. Please try again.',
+                    errorType: result.error || 'SERVER_ERROR',
+                    details: result.details
                 };
             } else {
                 // Other server errors - throw to trigger fallback
@@ -736,26 +791,47 @@ async function submitRegistration(data) {
         existingRegistrations.push(data);
         localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
         
+        // Handle warnings if present
+        if (result.warnings && result.warnings.length > 0) {
+            console.warn('Registration completed with warnings:', result.warnings);
+            result.hasWarnings = true;
+        }
+        
         return result;
     } catch (error) {
         console.error('API error, using localStorage fallback...', error);
         
-        // Only use localStorage fallback for network/server errors, not validation errors
-        try {
-            const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
-            existingRegistrations.push(data);
-            localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
-            
-            return {
-                success: true,
-                message: 'Registration saved locally. Will sync when database is available.',
-                registrationId: data.registrationId,
-                fallback: true
-            };
-        } catch (fallbackError) {
+        // Check if it's a network error or timeout
+        const isNetworkError = error.name === 'TypeError' || error.message.includes('fetch') || error.message.includes('network');
+        
+        if (isNetworkError) {
+            // Only use localStorage fallback for network/server errors, not validation errors
+            try {
+                const existingRegistrations = JSON.parse(localStorage.getItem('conventionRegistrations') || '[]');
+                existingRegistrations.push(data);
+                localStorage.setItem('conventionRegistrations', JSON.stringify(existingRegistrations));
+                
+                return {
+                    success: true,
+                    message: 'Registration saved locally due to network issues. Will sync when connection is restored.',
+                    registrationId: data.registrationId,
+                    fallback: true,
+                    errorType: 'NETWORK_ERROR'
+                };
+            } catch (fallbackError) {
+                console.error('LocalStorage fallback failed:', fallbackError);
+                return {
+                    success: false,
+                    message: 'Registration failed due to network issues and local storage is unavailable. Please try again.',
+                    errorType: 'STORAGE_ERROR'
+                };
+            }
+        } else {
+            // For other errors, don't use fallback
             return {
                 success: false,
-                message: 'Registration failed. Please try again.'
+                message: error.message || 'Registration failed. Please try again.',
+                errorType: 'UNKNOWN_ERROR'
             };
         }
     }

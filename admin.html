@@ -4,565 +4,246 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APLLS 2026 - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 30px;
-            background: #f8f9fa;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1e3c72;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .registrations {
-            padding: 30px;
-        }
-
-        .registrations h2 {
-            margin-bottom: 20px;
-            color: #1e3c72;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #1e3c72;
-            color: white;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px;
-        }
-
-        .refresh-btn {
-            background: #1e3c72;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+        .receipt-image {
+            max-width: 200px;
+            max-height: 150px;
+            object-fit: cover;
             cursor: pointer;
-            margin-bottom: 20px;
         }
-
-        .refresh-btn:hover {
-            background: #2a5298;
-        }
-
-        .export-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-
-        .export-btn:hover {
-            background: #218838;
-        }
-
-        /* Authentication Styles */
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .login-form {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
             width: 100%;
-            max-width: 400px;
-            text-align: center;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
         }
-
-        .login-form h2 {
-            color: #1e3c72;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
+        .modal-content {
+            margin: auto;
             display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80%;
+            object-fit: contain;
         }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #1e3c72;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: #1e3c72;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .login-btn:hover {
-            background: #2a5298;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            float: right;
-            margin-top: 10px;
-        }
-
-        .logout-btn:hover {
-            background: #c82333;
-        }
-
-        .hidden {
-            display: none;
         }
     </style>
 </head>
-<body>
-    <!-- Login Form -->
-    <div id="loginContainer" class="auth-container">
-        <div class="login-form">
-            <h2>🔐 Admin Login</h2>
-            <div id="errorMessage" class="error-message"></div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">APLLS 2026 - Admin Dashboard</h1>
+                <div class="flex space-x-4">
+                    <input type="password" id="adminPassword" placeholder="Admin Password" class="px-3 py-2 border rounded">
+                    <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
+                    <button onclick="refreshData()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Refresh</button>
                 </div>
-                <button type="submit" class="login-btn">Login</button>
-            </form>
+            </div>
+
+            <div id="loginMessage" class="mb-4 p-3 rounded hidden"></div>
+            
+            <div id="adminContent" class="hidden">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Registration Statistics</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-100 p-4 rounded">
+                            <h3 class="font-semibold">Total Registrations</h3>
+                            <p id="totalRegistrations" class="text-2xl font-bold text-blue-600">-</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded">
+                            <h3 class="font-semibold">With Payment Receipts</h3>
+                            <p id="withReceipts" class="text-2xl font-bold text-green-600">-</p>
+                        </div>
+                        <div class="bg-yellow-100 p-4 rounded">
+                            <h3 class="font-semibold">Pending Payment</h3>
+                            <p id="pendingPayment" class="text-2xl font-bold text-yellow-600">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <input type="text" id="searchInput" placeholder="Search by name, email, or registration ID..." 
+                           class="w-full px-3 py-2 border rounded" onkeyup="filterRegistrations()">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 border text-left">Registration ID</th>
+                                <th class="px-4 py-2 border text-left">Name</th>
+                                <th class="px-4 py-2 border text-left">Email</th>
+                                <th class="px-4 py-2 border text-left">Country</th>
+                                <th class="px-4 py-2 border text-left">Registration Date</th>
+                                <th class="px-4 py-2 border text-left">Payment Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrationsTable">
+                            <tr>
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">Please login to view registrations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
-    <div id="dashboardContainer" class="container hidden">
-        <div class="header">
-            <h1>🦁 APLLS 2026 Admin Dashboard</h1>
-            <p>Registration Management System</p>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-
-        <div class="stats" id="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalRegistrations">-</div>
-                <div class="stat-label">Total Registrations</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalRevenue">-</div>
-                <div class="stat-label">Total Revenue (RM)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="earlyBirdCount">-</div>
-                <div class="stat-label">Early Bird</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="standardCount">-</div>
-                <div class="stat-label">Standard</div>
-            </div>
-        </div>
-
-        <div class="registrations">
-            <h2>📋 Registration Details</h2>
-            <button class="refresh-btn" onclick="loadRegistrations()">🔄 Refresh</button>
-            <button class="export-btn" onclick="exportToCSV()">📊 Export CSV</button>
-            
-            <div class="table-container">
-                <table id="registrationsTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Country</th>
-                            <th>Passport/NRIC</th>
-                            <th>Organization</th>
-                            <th>Position</th>
-                            <th>Status</th>
-                            <th>Amount (RM)</th>
-                            <th>Date</th>
-                            <th>Payment Slip</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registrationsBody">
-                        <tr>
-                            <td colspan="11" class="loading">Loading registrations...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Modal for viewing receipt images -->
+    <div id="receiptModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
 
     <script>
-        // Authentication Configuration
-        const ADMIN_PASSWORD = 'APLLS2026'; // Change this to a secure password
-        const SESSION_KEY = 'aplls_admin_session';
-        const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
-
         let registrationsData = [];
+        let isLoggedIn = false;
 
-        // Authentication Functions
-        function checkAuthentication() {
-            const session = localStorage.getItem(SESSION_KEY);
-            if (session) {
-                const sessionData = JSON.parse(session);
-                const now = new Date().getTime();
-                
-                if (now < sessionData.expiry) {
-                    showDashboard();
-                    return true;
-                } else {
-                    localStorage.removeItem(SESSION_KEY);
-                }
-            }
-            showLogin();
-            return false;
-        }
-
-        function showLogin() {
-            document.getElementById('loginContainer').classList.remove('hidden');
-            document.getElementById('dashboardContainer').classList.add('hidden');
-        }
-
-        function showDashboard() {
-            document.getElementById('loginContainer').classList.add('hidden');
-            document.getElementById('dashboardContainer').classList.remove('hidden');
-            loadRegistrations();
-        }
-
-        function login(password) {
-            if (password === ADMIN_PASSWORD) {
-                const now = new Date().getTime();
-                const sessionData = {
-                    authenticated: true,
-                    expiry: now + SESSION_DURATION
-                };
-                localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-                showDashboard();
-                return true;
-            }
-            return false;
-        }
-
-        function logout() {
-            localStorage.removeItem(SESSION_KEY);
-            showLogin();
-        }
-
-        function showLoginError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        // Login Form Handler
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded - Admin page initialized');
-            const loginForm = document.getElementById('loginForm');
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const password = document.getElementById('password').value;
-                console.log('Login attempt with password:', password);
-                
-                if (login(password)) {
-                    console.log('Login successful');
-                    document.getElementById('password').value = '';
-                } else {
-                    console.log('Login failed');
-                    showLoginError('Invalid password. Please try again.');
-                    document.getElementById('password').value = '';
-                }
-            });
-
-            // Check authentication on page load
-            console.log('Checking authentication...');
-            checkAuthentication();
-        });
-
-        async function loadRegistrations() {
-            console.log('Loading registrations...');
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+            
             try {
-                // Add authentication header
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': ADMIN_PASSWORD
-                };
-                
-                console.log('Making API call to admin-registrations-neon...');
-                const response = await fetch('/.netlify/functions/admin-registrations-neon', {
-                    method: 'GET',
-                    headers: headers
+                const response = await fetch('/.netlify/functions/admin-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
                 });
                 
-                console.log('Response status:', response.status);
-                const data = await response.json();
-                console.log('Response data:', data);
-
-                if (data.success) {
-                    console.log('Data loaded successfully, registrations count:', data.registrations.length);
-                    registrationsData = data.registrations;
-                    updateStats(data.statistics);
-                    updateTable(data.registrations);
+                const result = await response.json();
+                
+                if (result.success) {
+                    isLoggedIn = true;
+                    document.getElementById('adminContent').classList.remove('hidden');
+                    messageDiv.className = 'mb-4 p-3 rounded bg-green-100 text-green-700';
+                    messageDiv.textContent = 'Login successful!';
+                    messageDiv.classList.remove('hidden');
+                    await loadRegistrations();
                 } else {
-                    console.error('API returned error:', data.error);
-                    showError('Failed to load registrations: ' + data.error);
+                    messageDiv.className = 'mb-4 p-3 rounded bg-red-100 text-red-700';
+                    messageDiv.textContent = 'Invalid password';
+                    messageDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                messageDiv.className = 'mb-4 p-3 rounded bg-red-100 text-red-700';
+                messageDiv.textContent = 'Login failed: ' + error.message;
+                messageDiv.classList.remove('hidden');
+            }
+        }
+
+        async function loadRegistrations() {
+            if (!isLoggedIn) return;
+            
+            try {
+                const response = await fetch('/.netlify/functions/admin-registrations-neon');
+                const result = await response.json();
+                
+                if (result.success) {
+                    registrationsData = result.registrations || result.data;
+                    updateStatistics();
+                    displayRegistrations(registrationsData);
+                } else {
+                    console.error('Failed to load registrations:', result.error);
                 }
             } catch (error) {
                 console.error('Error loading registrations:', error);
-                showError('Error connecting to API. Using demo data.');
-                
-                // Fallback to demo data
-                const demoData = {
-                    success: true,
-                    registrations: [
-                        {
-                            registration_id: 'APLLS-DEMO-001',
-                            full_name: 'John Doe',
-                            email: 'john.doe@example.com',
-                            phone: '+60123456789',
-                            club_name: 'Lions Club KL',
-                            district: 'District 308B1',
-                            position: 'President',
-                            registration_type: 'early-bird',
-                            total_amount: 260,
-                            created_at: new Date().toISOString(),
-                            payment_slip_url: null
-                        },
-                        {
-                            registration_id: 'APLLS-DEMO-002',
-                            full_name: 'Jane Smith',
-                            email: 'jane.smith@example.com',
-                            phone: '+60123456790',
-                            club_name: 'Lions Club PJ',
-                            district: 'District 308B2',
-                            position: 'Secretary',
-                            registration_type: 'standard',
-                            total_amount: 390,
-                            created_at: new Date().toISOString(),
-                            payment_slip_url: null
-                        }
-                    ],
-                    statistics: {
-                        total_registrations: 2,
-                        total_revenue: 650,
-                        early_bird_count: 1,
-                        standard_count: 1
-                    }
-                };
-                
-                registrationsData = demoData.registrations;
-                updateStats(demoData.statistics);
-                updateTable(demoData.registrations);
             }
         }
 
-        function updateStats(stats) {
-            document.getElementById('totalRegistrations').textContent = stats.total_registrations || 0;
-            document.getElementById('totalRevenue').textContent = (stats.total_revenue || 0).toLocaleString();
-            document.getElementById('earlyBirdCount').textContent = stats.early_bird_count || 0;
-            document.getElementById('standardCount').textContent = stats.standard_count || 0;
-        }
-
-        function updateTable(registrations) {
-            const tbody = document.getElementById('registrationsBody');
+        function updateStatistics() {
+            const total = registrationsData.length;
+            const withReceipts = registrationsData.filter(reg => reg.payment_slip_url).length;
+            const pending = total - withReceipts;
             
-            if (registrations.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="loading">No registrations found.</td></tr>';
+            document.getElementById('totalRegistrations').textContent = total;
+            document.getElementById('withReceipts').textContent = withReceipts;
+            document.getElementById('pendingPayment').textContent = pending;
+        }
+
+        function displayRegistrations(data) {
+            const tbody = document.getElementById('registrationsTable');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No registrations found</td></tr>';
                 return;
             }
-
-            tbody.innerHTML = registrations.map(reg => `
-                <tr>
-                    <td>${reg.registration_id}</td>
-                    <td>${reg.full_name}</td>
-                    <td>${reg.email}</td>
-                    <td>${reg.phone || '-'}</td>
-                    <td>${reg.residence_country || '-'}</td>
-                    <td>${reg.passport_nric || '-'}</td>
-                    <td>${reg.club_name || '-'}</td>
-                    <td>${reg.position || '-'}</td>
-                    <td>${reg.registration_type}</td>
-                    <td>RM ${reg.total_amount}</td>
-                    <td>${new Date(reg.created_at).toLocaleDateString()}</td>
-                    <td>${reg.payment_slip_url ? `<a href="${reg.payment_slip_url}" target="_blank">View</a>` : '-'}</td>
-                </tr>
-            `).join('');
+            
+            tbody.innerHTML = data.map(reg => {
+                const receiptCell = reg.payment_slip_url ? 
+                    `<img src="${reg.payment_slip_url}" alt="Payment Receipt" class="receipt-image" onclick="showModal('${reg.payment_slip_url}')" title="Click to view full size">` :
+                    '<span class="text-red-500">No receipt</span>';
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 border">${reg.registration_id}</td>
+                        <td class="px-4 py-2 border">${reg.first_name} ${reg.last_name}</td>
+                        <td class="px-4 py-2 border">${reg.email}</td>
+                        <td class="px-4 py-2 border">${reg.residence_country || 'N/A'}</td>
+                        <td class="px-4 py-2 border">${new Date(reg.created_at).toLocaleDateString()}</td>
+                        <td class="px-4 py-2 border">${receiptCell}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        function showError(message) {
-            const tbody = document.getElementById('registrationsBody');
-            tbody.innerHTML = `<tr><td colspan="13" class="error">${message}</td></tr>`;
+        function filterRegistrations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = registrationsData.filter(reg => {
+                return reg.registration_id.toLowerCase().includes(searchTerm) ||
+                       `${reg.first_name} ${reg.last_name}`.toLowerCase().includes(searchTerm) ||
+                       reg.email.toLowerCase().includes(searchTerm);
+            });
+            
+            displayRegistrations(filtered);
         }
 
-        function exportToCSV() {
-            if (registrationsData.length === 0) {
-                alert('No data to export');
-                return;
+        function showModal(imageSrc) {
+            const modal = document.getElementById('receiptModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImg.src = imageSrc;
+        }
+
+        function closeModal() {
+            document.getElementById('receiptModal').style.display = 'none';
+        }
+
+        async function refreshData() {
+            if (isLoggedIn) {
+                await loadRegistrations();
             }
-
-            const headers = ['Registration ID', 'Name', 'Email', 'Phone', 'Country', 'Passport/NRIC', 'Club', 'District', 'Position', 'Type', 'Amount', 'Date', 'Payment Slip URL'];
-            const csvContent = [
-                headers.join(','),
-                ...registrationsData.map(reg => [
-                    reg.registration_id,
-                    `"${reg.full_name}"`,
-                    reg.email,
-                    reg.phone || '',
-                    `"${reg.residence_country || ''}"`,
-                    `"${reg.passport_nric || ''}"`,
-                    `"${reg.club_name || ''}"`,
-                    `"${reg.district || ''}"`,
-                    `"${reg.position || ''}"`,
-                    reg.registration_type,
-                    reg.total_amount,
-                    new Date(reg.created_at).toLocaleDateString(),
-                    reg.payment_slip_url || ''
-                ].join(','))
-            ].join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `aplls-2026-registrations-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
         }
 
-        // Auto-refresh every 30 seconds (only when authenticated)
-        setInterval(() => {
-            if (document.getElementById('dashboardContainer').classList.contains('hidden') === false) {
-                loadRegistrations();
+        // Close modal when clicking outside the image
+        window.onclick = function(event) {
+            const modal = document.getElementById('receiptModal');
+            if (event.target === modal) {
+                closeModal();
             }
-        }, 30000);
+        }
+
+        // Allow Enter key to login
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
     </script>
 </body>
 </html>

@@ -1,112 +1,217 @@
 // Registration API for Netlify Functions
-// Uses Supabase database for permanent storage
+// Uses Neon database for permanent storage and Cloudinary for file uploads
 
-const { createClient } = require('@supabase/supabase-js');
+import { Client } from 'pg';
+import { uploadToCloudinary } from './config/cloudinary.js';
+import dotenv from 'dotenv';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || 'https://eragmmdwgtbylrmjzqwf.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
+// Load environment variables
+dotenv.config();
 
-if (!supabaseKey) {
-  throw new Error('SUPABASE_KEY or SUPABASE_ANON_KEY environment variable is required');
-}
+// Initialize Neon database client
+const getDatabaseClient = () => {
+  return new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+};
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Helper functions using Supabase
+// Helper functions using Neon PostgreSQL
 async function getAllRegistrations() {
-  const { data, error } = await supabase
-    .from('registrations')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return data || [];
+  const client = getDatabaseClient();
+  try {
+    await client.connect();
+    const result = await client.query('SELECT * FROM registrations ORDER BY created_at DESC');
+    return result.rows;
+  } finally {
+    await client.end();
+  }
 }
 
 async function addRegistration(registration) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .insert([registration])
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
+  const client = getDatabaseClient();
+  try {
+    await client.connect();
+    
+    // Test connection first
+    await client.query('SELECT 1');
+    
+    const columns = Object.keys(registration).join(', ');
+    const values = Object.values(registration);
+    const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
+    
+    const query = `INSERT INTO registrations (${columns}) VALUES (${placeholders}) RETURNING *`;
+    const result = await client.query(query, values);
+    
+    if (!result.rows || result.rows.length === 0) {
+      throw new Error('Registration was not saved - no data returned from database');
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Database error in addRegistration:', error);
+    
+    // Provide more specific error messages
+    if (error.code === '23505') { // Unique constraint violation
+      throw new Error('Registration ID or email already exists');
+    } else if (error.code === '23502') { // Not null violation
+      throw new Error('Required field is missing');
+    } else if (error.code === '42P01') { // Table does not exist
+      throw new Error('Database table not found - please contact support');
+    } else if (error.code === 'ECONNREFUSED') {
+      throw new Error('Database connection failed');
+    } else {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  } finally {
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error('Error closing database connection:', closeError);
+    }
+  }
 }
 
 async function findRegistrationByEmail(email) {
-  const { data, error } = await supabase
-    .from('registrations')
-    .select('*')
-    .eq('email', email.toLowerCase())
-    .single();
-  
-  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
-  return data;
+  const client = getDatabaseClient();
+  try {
+    await client.connect();
+    
+    // Test connection first
+    await client.query('SELECT 1');
+    
+    const result = await client.query('SELECT * FROM registrations WHERE email = $1', [email.toLowerCase()]);
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Database error in findRegistrationByEmail:', error);
+    
+    if (error.code === '42P01') { // Table does not exist
+      throw new Error('Database table not found - please contact support');
+    } else if (error.code === 'ECONNREFUSED') {
+      throw new Error('Database connection failed');
+    } else {
+      throw new Error(`Database query error: ${error.message}`);
+    }
+  } finally {
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error('Error closing database connection:', closeError);
+    }
+  }
 }
 
-// Process payment slip file and return URL
+// Process payment slip file and return Cloudinary URL
 async function processPaymentSlip(paymentSlipData, registrationId) {
   if (!paymentSlipData || !paymentSlipData.fileData) {
-    return null;
+    return { success: false, error: 'No payment slip data provided' };
   }
   
   try {
-    // Convert base64 data URL to buffer
-    const base64Data = paymentSlipData.fileData.split(',')[1];
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    const fileExtension = paymentSlipData.fileName.split('.').pop().toLowerCase();
-    const fileName = `payment-slip-${registrationId}.${fileExtension}`;
-    
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('payment-slips')
-      .upload(fileName, buffer, {
-        contentType: paymentSlipData.fileType,
-        upsert: true
-      });
-    
-    if (error) {
-      console.error('Supabase Storage upload error:', error);
-      return null;
+    // Validate file data format
+    if (!paymentSlipData.fileData.startsWith('data:')) {
+      throw new Error('Invalid file format - must be base64 data URL');
     }
     
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-      .from('payment-slips')
-      .getPublicUrl(fileName);
+    // Validate file size (max 5MB)
+    const base64Data = paymentSlipData.fileData.split(',')[1];
+    if (!base64Data) {
+      throw new Error('Invalid base64 data');
+    }
     
-    return publicUrlData.publicUrl;
+    const fileSizeInBytes = (base64Data.length * 3) / 4;
+    const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+    if (fileSizeInBytes > maxSizeInBytes) {
+      throw new Error('File size exceeds 5MB limit');
+    }
+    
+    // Validate file extension
+    const fileName = paymentSlipData.fileName || 'payment-slip';
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'gif'];
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      throw new Error(`Invalid file type. Allowed: ${allowedExtensions.join(', ')}`);
+    }
+    
+    // Convert base64 data URL to buffer
+    const buffer = Buffer.from(base64Data, 'base64');
+    const cloudinaryFileName = `payment-slip-${registrationId}-${Date.now()}`;
+    
+    // Upload to Cloudinary with retry logic
+    let uploadResult;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        uploadResult = await uploadToCloudinary(buffer, cloudinaryFileName, 'aplls-2026/payment-slips');
+        break; // Success, exit retry loop
+      } catch (uploadError) {
+        retryCount++;
+        console.warn(`Cloudinary upload attempt ${retryCount} failed:`, uploadError.message);
+        
+        if (retryCount >= maxRetries) {
+          throw new Error(`Upload failed after ${maxRetries} attempts: ${uploadError.message}`);
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+    
+    if (!uploadResult || !uploadResult.secure_url) {
+      throw new Error('Cloudinary upload completed but no URL returned');
+    }
+    
+    console.log(`Payment slip uploaded successfully: ${uploadResult.secure_url}`);
+    return { success: true, url: uploadResult.secure_url, publicId: uploadResult.public_id };
+    
   } catch (error) {
     console.error('Error processing payment slip:', error);
-    return null;
+    return { 
+      success: false, 
+      error: error.message || 'Unknown upload error',
+      details: {
+        fileName: paymentSlipData.fileName,
+        registrationId,
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 }
 
 async function getRegistrationStats() {
-  const { data: allRegistrations, error: allError } = await supabase
-    .from('registrations')
-    .select('registration_type, created_at');
-  
-  if (allError) throw allError;
-  
-  const total = allRegistrations?.length || 0;
-  const earlyBird = allRegistrations?.filter(r => r.registration_type === 'early-bird').length || 0;
-  
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const last24Hours = allRegistrations?.filter(r => new Date(r.created_at) > yesterday).length || 0;
-  
-  return {
-    total,
-    earlyBird,
-    last24Hours
-  };
+  const client = getDatabaseClient();
+  try {
+    await client.connect();
+    
+    // Get total registrations
+    const totalResult = await client.query('SELECT COUNT(*) as count FROM registrations');
+    const total = parseInt(totalResult.rows[0].count) || 0;
+    
+    // Get early bird registrations
+    const earlyBirdResult = await client.query('SELECT COUNT(*) as count FROM registrations WHERE registration_type = $1', ['early-bird']);
+    const earlyBird = parseInt(earlyBirdResult.rows[0].count) || 0;
+    
+    // Get registrations in last 24 hours
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const last24HoursResult = await client.query('SELECT COUNT(*) as count FROM registrations WHERE created_at > $1', [yesterday]);
+    const last24Hours = parseInt(last24HoursResult.rows[0].count) || 0;
+    
+    return {
+      total,
+      earlyBird,
+      last24Hours
+    };
+  } finally {
+    await client.end();
+  }
 }
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   const req = {
     method: event.httpMethod,
     body: event.body ? JSON.parse(event.body) : {}
@@ -153,15 +258,19 @@ exports.handler = async (event, context) => {
           recent_24h_count: stats.last24Hours,
           database_connected: true,
           database_info: {
-            provider: 'Supabase',
-            client: '@supabase/supabase-js',
-            connection_method: 'REST API',
+            provider: 'Neon',
+            client: 'pg',
+            connection_method: 'PostgreSQL',
             status: 'Production Ready - Permanent Storage'
+          },
+          file_storage: {
+            provider: 'Cloudinary',
+            status: 'Cloud Storage - Free Tier'
           },
           environment: {
             node_version: process.version,
-            storage_method: 'supabase_postgresql',
-            note: 'Using Supabase PostgreSQL for permanent data storage'
+            storage_method: 'neon_postgresql',
+            note: 'Using Neon PostgreSQL for data storage and Cloudinary for file uploads'
           }
         })
       };
@@ -251,8 +360,16 @@ exports.handler = async (event, context) => {
 
       // Process payment slip if provided
       let paymentSlipUrl = null;
+      let uploadError = null;
       if (paymentSlip) {
-        paymentSlipUrl = await processPaymentSlip(paymentSlip, registrationId);
+        const uploadResult = await processPaymentSlip(paymentSlip, registrationId);
+        if (uploadResult.success) {
+          paymentSlipUrl = uploadResult.url;
+        } else {
+          uploadError = uploadResult.error;
+          console.error('Payment slip upload failed:', uploadResult);
+          // Continue with registration but note the upload failure
+        }
       }
 
       // Helper function to convert string to boolean
@@ -297,8 +414,46 @@ exports.handler = async (event, context) => {
         status: 'pending'
       };
 
-      // Save to Supabase database
-      const savedRegistration = await addRegistration(registration);
+      // Save to Neon database with enhanced error handling
+      let savedRegistration;
+      try {
+        savedRegistration = await addRegistration(registration);
+      } catch (dbError) {
+        console.error('Database save error:', dbError);
+        
+        // If upload succeeded but database failed, try to clean up Cloudinary
+        if (paymentSlipUrl && uploadResult?.publicId) {
+          try {
+            await deleteFromCloudinary(uploadResult.publicId);
+            console.log('Cleaned up uploaded file after database error');
+          } catch (cleanupError) {
+            console.error('Failed to cleanup uploaded file:', cleanupError);
+          }
+        }
+        
+        return {
+          statusCode: 500,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: false,
+            message: 'Registration failed due to database error. Please try again.',
+            error: 'DATABASE_ERROR',
+            details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          })
+        };
+      }
+
+      // Prepare response message
+      let responseMessage = 'Registration submitted successfully!';
+      const warnings = [];
+      
+      if (uploadError) {
+        warnings.push(`Payment slip upload failed: ${uploadError}`);
+        responseMessage += ' Note: Payment slip could not be uploaded - please contact support.';
+      }
 
       return {
         statusCode: 201,
@@ -308,8 +463,9 @@ exports.handler = async (event, context) => {
         },
         body: JSON.stringify({
           success: true,
-          message: 'Registration submitted successfully!',
+          message: responseMessage,
           registration_id: registrationId,
+          warnings: warnings.length > 0 ? warnings : undefined,
           data: {
             id: savedRegistration.id,
             registration_id: registrationId,
@@ -318,7 +474,8 @@ exports.handler = async (event, context) => {
             club_name: clubName,
             registration_type: registrationType,
             total_amount: parseFloat(totalAmount) || 0,
-            status: 'pending'
+            status: 'pending',
+            payment_slip_uploaded: !!paymentSlipUrl
           }
         })
       };

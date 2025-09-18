@@ -43,28 +43,77 @@ function generateRegistrationId() {
 }
 
 /**
- * Upload file to Cloudinary
+ * Upload file to local storage (Netlify static files)
+ * This is a fallback solution when Cloudinary is not configured
  */
-async function uploadToCloudinary(fileBuffer, fileName) {
+async function uploadToLocalStorage(fileBuffer, fileName, registrationId) {
   try {
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'auto',
-          public_id: `payment-slips/${Date.now()}-${fileName}`,
-          folder: 'aplls-2026/payment-slips'
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(fileBuffer);
-    });
+    const fs = require('fs').promises;
+    const path = require('path');
     
-    return result.secure_url;
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'payment-slips');
+    
+    try {
+      await fs.mkdir(uploadsDir, { recursive: true });
+    } catch (mkdirError) {
+      // Directory might already exist, continue
+    }
+    
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExtension = path.extname(fileName) || '.jpg';
+    const uniqueFileName = `payment-slip-${registrationId}-${timestamp}${fileExtension}`;
+    const filePath = path.join(uploadsDir, uniqueFileName);
+    
+    // Save file
+    await fs.writeFile(filePath, fileBuffer);
+    
+    // Return public URL
+    return `/uploads/payment-slips/${uniqueFileName}`;
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw new Error('Failed to upload file to Cloudinary');
+    console.error('Local storage upload error:', error);
+    throw new Error('Failed to upload file to local storage');
+  }
+}
+
+/**
+ * Upload file to Cloudinary (if configured) or local storage as fallback
+ */
+async function uploadFile(fileBuffer, fileName, registrationId) {
+  // Check if Cloudinary is properly configured
+  const isCloudinaryConfigured = 
+    process.env.CLOUDINARY_CLOUD_NAME && 
+    process.env.CLOUDINARY_API_KEY && 
+    process.env.CLOUDINARY_API_SECRET &&
+    process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name' &&
+    process.env.CLOUDINARY_API_KEY !== 'your_api_key' &&
+    process.env.CLOUDINARY_API_SECRET !== 'your_api_secret';
+  
+  if (isCloudinaryConfigured) {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'auto',
+            public_id: `payment-slips/${Date.now()}-${fileName}`,
+            folder: 'aplls-2026/payment-slips'
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(fileBuffer);
+      });
+      
+      return result.secure_url;
+    } catch (error) {
+      console.error('Cloudinary upload error, falling back to local storage:', error);
+      return await uploadToLocalStorage(fileBuffer, fileName, registrationId);
+    }
+  } else {
+    console.log('Cloudinary not configured, using local storage');
+    return await uploadToLocalStorage(fileBuffer, fileName, registrationId);
   }
 }
 
@@ -163,7 +212,7 @@ async function getRegistrationStats() {
 /**
  * Main handler function
  */
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -289,9 +338,10 @@ exports.handler = async (event, context) => {
       if (files && files.length > 0) {
         const paymentSlipFile = files.find(file => file.fieldname === 'paymentSlip');
         if (paymentSlipFile) {
-          paymentSlipUrl = await uploadToCloudinary(
+          paymentSlipUrl = await uploadFile(
             paymentSlipFile.content,
-            paymentSlipFile.filename
+            paymentSlipFile.filename,
+            registrationId
           );
         }
       }
@@ -302,12 +352,13 @@ exports.handler = async (event, context) => {
           const base64Data = fields.paymentSlip.fileData.split(',')[1]; // Remove data:image/jpeg;base64, prefix
           const fileBuffer = Buffer.from(base64Data, 'base64');
           
-          paymentSlipUrl = await uploadToCloudinary(
+          paymentSlipUrl = await uploadFile(
             fileBuffer,
-            fields.paymentSlip.fileName || 'payment-slip'
+            fields.paymentSlip.fileName || 'payment-slip',
+            registrationId
           );
         } catch (uploadError) {
-          console.error('Error uploading payment slip from JSON:', uploadError);
+          console.error('Error uploading payment slip:', uploadError);
           // Continue with registration even if file upload fails
         }
       }
@@ -372,7 +423,8 @@ exports.handler = async (event, context) => {
             email: savedRegistration.email,
             status: savedRegistration.status,
             created_at: savedRegistration.created_at,
-            payment_slip_uploaded: !!paymentSlipUrl
+            payment_slip_uploaded: !!paymentSlipUrl,
+            payment_slip_url: paymentSlipUrl
           },
           stats
         })

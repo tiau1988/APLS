@@ -11,7 +11,7 @@
  * - Maintains same admin authentication logic
  */
 
-const { neon } = require('@neondatabase/serverless');
+import { neon } from '@neondatabase/serverless';
 
 // Initialize Neon SQL client
 const sql = neon(process.env.NEON_DATABASE_URL);
@@ -237,7 +237,7 @@ function formatRegistrationData(registrations) {
 /**
  * Main handler function
  */
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -365,3 +365,4 @@ exports.handler = async (event, context) => {
 // - Environment: Production ready
 // - Node.js Version: 18.x
 // - Neon PostgreSQL Storage: Managed cloud database
+// - File Storage: Cloudinary (for payment slip images)

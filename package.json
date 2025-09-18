@@ -10,9 +10,10 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
     "@supabase/supabase-js": "^2.54.0",
-    "cloudinary": "^2.5.1",
+    "cloudinary": "^2.7.0",
     "dotenv": "^17.2.2",
     "lambda-multipart-parser": "^1.0.1",
+    "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
     "uuid": "^11.1.0"
   },
