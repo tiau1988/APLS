@@ -367,9 +367,14 @@ function toggleOtherDistrict() {
 // Live Registration Counter Functions
 async function fetchRegistrationCounts() {
     try {
+        console.log('Fetching registration stats from API...');
         const response = await fetch('/.netlify/functions/registration-stats');
+        console.log('API response status:', response.status);
+        
         if (response.ok) {
             const result = await response.json();
+            console.log('Raw API response:', result);
+            
             if (result.success && result.data) {
                 const data = result.data;
                 // Transform the API response to match expected format
@@ -385,10 +390,15 @@ async function fetchRegistrationCounts() {
                         percentage: Math.round(((data.early_bird || 0) / (data.early_bird_limit || 100)) * 100)
                     }
                 };
-                console.log('Registration stats loaded:', transformedData);
+                console.log('Registration stats loaded successfully:', transformedData);
+                console.log('Total count to display:', transformedData.counts.total);
                 updateCounterDisplay(transformedData);
                 return transformedData;
+            } else {
+                console.error('API response missing success or data:', result);
             }
+        } else {
+            console.error('API request failed with status:', response.status);
         }
     } catch (error) {
         console.error('Registration stats API error:', error);
@@ -413,9 +423,18 @@ async function fetchRegistrationCounts() {
 }
 
 function updateCounterDisplay(data) {
+    console.log('Updating counter display with data:', data);
     const totalCountEl = document.getElementById('totalCount');
-
-    if (totalCountEl) totalCountEl.textContent = data.counts?.total || 0;
+    console.log('totalCount element found:', totalCountEl);
+    
+    if (totalCountEl) {
+        const totalValue = data.counts?.total || 0;
+        console.log('Setting totalCount to:', totalValue);
+        totalCountEl.textContent = totalValue;
+        console.log('totalCount element updated. Current text:', totalCountEl.textContent);
+    } else {
+        console.error('totalCount element not found!');
+    }
 
     // Update early bird availability in registration form
     updateEarlyBirdAvailability(data.earlyBird?.available || false);
@@ -436,8 +455,25 @@ function updateEarlyBirdAvailability(isAvailable) {
 
 // Auto-refresh registration counts every 30 seconds
 function startLiveCountUpdates() {
-    fetchRegistrationCounts(); // Initial load
-    setInterval(fetchRegistrationCounts, 30000); // Update every 30 seconds
+    console.log('Starting live count updates...');
+    
+    // Test if totalCount element exists
+    const testElement = document.getElementById('totalCount');
+    console.log('totalCount element found:', testElement);
+    if (testElement) {
+        testElement.textContent = 'LOADING...';
+        testElement.style.color = 'blue';
+        testElement.style.fontSize = '24px';
+        testElement.style.backgroundColor = 'yellow';
+        testElement.style.padding = '5px';
+        console.log('Set test value and styling');
+    }
+    
+    // Initial load
+    fetchRegistrationCounts();
+    
+    // Set up interval for updates every 30 seconds
+    setInterval(fetchRegistrationCounts, 30000);
 }
 
 // Initialize total calculation on page load

@@ -1,11 +1,11 @@
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-exports.handler = async (event, context) => {
+// Export the handler function
+export const handler = async (event, context) => {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -52,10 +52,15 @@ exports.handler = async (event, context) => {
     }
 
     const stats = {
-      totalCount: totalRegistrations || 0,
-      earlyBirdCount: earlyBirdRegistrations || 0,
-      earlyBirdLimit: 150, // Set your early bird limit here
-      earlyBirdRemaining: Math.max(0, 150 - (earlyBirdRegistrations || 0))
+      success: true,
+      data: {
+        total: totalRegistrations || 0,
+        early_bird: earlyBirdRegistrations || 0,
+        early_bird_limit: 150,
+        early_bird_remaining: Math.max(0, 150 - (earlyBirdRegistrations || 0)),
+        early_bird_available: (earlyBirdRegistrations || 0) < 150,
+        recent_24h: 0 // This would require additional query for last 24h registrations
+      }
     };
 
     return {
